@@ -17,6 +17,7 @@ public class Project {
     private List<Material> materials;
     private List<Labor> laborItems;
 
+
     public Project(String name, double surface, LocalDate startDate, ProjectStatus status) {
         this.id = UUID.randomUUID();
         this.name = name;
