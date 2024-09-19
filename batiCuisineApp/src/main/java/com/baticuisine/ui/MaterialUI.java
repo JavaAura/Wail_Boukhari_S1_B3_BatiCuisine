@@ -6,7 +6,6 @@ import java.util.Scanner;
 import java.util.logging.Logger;
 
 import com.baticuisine.model.Material;
-import com.baticuisine.model.enums.MaterialType;
 import com.baticuisine.service.MaterialService;
 import com.baticuisine.utils.InputValidator;
 
@@ -62,8 +61,7 @@ public class MaterialUI {
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
         double unitPrice = inputValidator.getValidDoubleInput(scanner, "Prix unitaire : ");
         String unit = inputValidator.getValidStringInput(scanner, "Unité de mesure : ");
-        MaterialType type = inputValidator.getValidEnumInput(scanner, "Type de matériau (APPLIANCE, CABINET, COUNTERTOP, PLUMBING, ELECTRICAL, FLOORING, PAINT, HARDWARE, OTHER) : ", MaterialType.class);
-
+        String type = inputValidator.getValidStringInput(scanner, "Type de matériau (APPLIANCE, CABINET, COUNTERTOP, PLUMBING, ELECTRICAL, FLOORING, PAINT, HARDWARE, OTHER) : ");
         Material newMaterial = new Material(name, unitPrice, unit, type);
         materialService.createMaterial(newMaterial);
         LOGGER.info("New material created: " + name);
@@ -88,7 +86,7 @@ public class MaterialUI {
             Material material = materialOpt.get();
             double unitPrice = inputValidator.getValidDoubleInput(scanner, "Nouveau prix unitaire : ");
             String unit = inputValidator.getValidStringInput(scanner, "Nouvelle unité de mesure : ");
-            MaterialType type = inputValidator.getValidEnumInput(scanner, "Nouveau type de matériau (APPLIANCE, CABINET, COUNTERTOP, PLUMBING, ELECTRICAL, FLOORING, PAINT, HARDWARE, OTHER) : ", MaterialType.class);
+            String type = inputValidator.getValidStringInput(scanner, "Nouveau type de matériau (APPLIANCE, CABINET, COUNTERTOP, PLUMBING, ELECTRICAL, FLOORING, PAINT, HARDWARE, OTHER) : ");
 
             material.setUnitPrice(unitPrice);
             material.setUnit(unit);

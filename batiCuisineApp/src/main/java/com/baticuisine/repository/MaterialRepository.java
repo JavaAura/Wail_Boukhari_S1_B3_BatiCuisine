@@ -9,7 +9,6 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 import com.baticuisine.model.Material;
-import com.baticuisine.model.enums.MaterialType;
 
 public class MaterialRepository {
     private static final Logger LOGGER = Logger.getLogger(MaterialRepository.class.getName());
@@ -26,7 +25,7 @@ public class MaterialRepository {
             pstmt.setString(2, material.getName());
             pstmt.setDouble(3, material.getUnitPrice());
             pstmt.setString(4, material.getUnit());
-            pstmt.setString(5, material.getType().name());
+            pstmt.setString(5, material.getType());
             pstmt.executeUpdate();
             LOGGER.info("Material saved: " + material.getName());
         } catch (SQLException e) {
@@ -71,7 +70,7 @@ public class MaterialRepository {
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setDouble(1, material.getUnitPrice());
             pstmt.setString(2, material.getUnit());
-            pstmt.setString(3, material.getType().name());
+            pstmt.setString(3, material.getType());
             pstmt.setObject(4, material.getId());
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
@@ -107,7 +106,7 @@ public class MaterialRepository {
             rs.getString("name"),
             rs.getDouble("unit_price"),
             rs.getString("unit"),
-            MaterialType.valueOf(rs.getString("type"))
+            String.valueOf(rs.getString("type"))
         );
     }
 }

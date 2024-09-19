@@ -1,18 +1,15 @@
 package com.baticuisine.model;
 
 import java.util.UUID;
-
-import com.baticuisine.model.enums.MaterialType;
-
 public class Material {
     private UUID id;
     private String name;
     private double unitPrice;
     private String unit;
     private int quantity;
-    private MaterialType type;
+    private String type;
 
-    public Material(UUID id, String name, double unitPrice, String unit, MaterialType type) {
+    public Material(UUID id, String name, double unitPrice, String unit, String type) {
         this.id = id;
         this.name = name;
         this.unitPrice = unitPrice;
@@ -21,7 +18,7 @@ public class Material {
         this.type = type;
     }
 
-    public Material(String name, double unitPrice, String unit, MaterialType type) {
+    public Material(String name, double unitPrice, String unit, String type) {
         this(UUID.randomUUID(), name, unitPrice, unit, type);
     }
 
@@ -40,8 +37,8 @@ public class Material {
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
 
-    public MaterialType getType() { return type; }
-    public void setType(MaterialType type) { this.type = type; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
     @Override
     public String toString() {
