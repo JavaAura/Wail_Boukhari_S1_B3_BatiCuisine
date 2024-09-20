@@ -2,7 +2,9 @@ package com.baticuisine.model;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.baticuisine.model.enums.ProjectStatus;
@@ -14,9 +16,8 @@ public class Project {
     private LocalDate startDate;
     private ProjectStatus status;
     private Client client;
-    private List<Material> materials;
     private List<Labor> laborItems;
-
+    private Map<Material, Double> materials;
 
     public Project(String name, double surface, LocalDate startDate, ProjectStatus status) {
         this.id = UUID.randomUUID();
@@ -24,7 +25,7 @@ public class Project {
         this.surface = surface;
         this.startDate = startDate;
         this.status = status;
-        this.materials = new ArrayList<>();
+        this.materials = new HashMap<>();
         this.laborItems = new ArrayList<>();
     }
 
@@ -47,11 +48,13 @@ public class Project {
     public Client getClient() { return client; }
     public void setClient(Client client) { this.client = client; }
 
-    public List<Material> getMaterials() { return materials; }
-    public void addMaterial(Material material) { this.materials.add(material); }
-
     public List<Labor> getLaborItems() { return laborItems; }
     public void addLaborItem(Labor labor) { this.laborItems.add(labor); }
+
+    public List<Material> getMaterials() { return new ArrayList<>(materials.keySet()); }
+    public void addMaterial(Material material, double quantity) { this.materials.put(material, quantity); }
+
+    public Map<Material, Double> getMaterialsWithQuantities() { return new HashMap<>(materials); }
 
     @Override
     public String toString() {

@@ -51,7 +51,7 @@ public class Main {
             QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, (QuoteRepository) repositories.get("quote"));
 
             MainMenu mainMenu = new MainMenu();
-            ProjectUI projectUI = new ProjectUI((ProjectService) services.get("project"), costCalculator, inputValidator, quoteGenerator);
+            ProjectUI projectUI = new ProjectUI((ProjectService) services.get("project"), costCalculator, inputValidator, quoteGenerator, (MaterialService) services.get("material"), (ClientService) services.get("client"));
             ClientUI clientUI = new ClientUI((ClientService) services.get("client"), inputValidator);
             MaterialUI materialUI = new MaterialUI((MaterialService) services.get("material"), inputValidator);
 

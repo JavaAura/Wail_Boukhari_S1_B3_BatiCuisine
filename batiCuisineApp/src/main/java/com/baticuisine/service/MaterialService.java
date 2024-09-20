@@ -40,7 +40,7 @@ public class MaterialService {
 
     public double calculateTotalCost(List<Material> materials) {
         return materials.stream()
-                .mapToDouble(material -> material.getUnitPrice() * material.getQuantity())
+                .mapToDouble(Material::calculateCost)
                 .sum();
     }
 }

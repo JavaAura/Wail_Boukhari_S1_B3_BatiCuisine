@@ -21,8 +21,8 @@ public class QuoteGenerator {
     }
 
     public Quote generateQuote(Project project) {
-        LOGGER.info("Generating quote for project: " + project.getName());
-        try {
+        LOGGER.info("Génération du devis pour le projet : " + project.getName());
+                try {
             StringBuilder quoteContent = new StringBuilder();
             quoteContent.append("Devis pour le projet: ").append(project.getName()).append("\n\n");
 
@@ -39,12 +39,11 @@ public class QuoteGenerator {
             quote.setContent(quoteContent.toString());
 
             quoteRepository.saveQuote(quote);
-            LOGGER.info("Quote generated and saved for project: " + project.getName());
-
+            LOGGER.info("Devis généré et enregistré pour le projet : " + project.getName());    
             return quote;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error generating quote for project: " + project.getName(), e);
-            throw new RuntimeException("Failed to generate quote", e);
+            LOGGER.log(Level.SEVERE, "Erreur lors de la génération du devis pour le projet : " + project.getName(), e);
+            throw new RuntimeException("Échec de la génération du devis", e);
         }
     }
 
@@ -59,21 +58,22 @@ public class QuoteGenerator {
         quote.append("Matériaux:\n");
         for (Material material : project.getMaterials()) {
             quote.append("- ").append(material.getName())
-                 .append(": ").append(String.format("%.2f", material.getQuantity()))
-                 .append(" ").append(material.getUnit())
-                 .append(" x ").append(String.format("%.2f", material.getUnitPrice()))
-                 .append("€ = ").append(String.format("%.2f", material.getQuantity() * material.getUnitPrice()))
-                 .append("€\n");
+            .append(": ").append(String.format("%.2f", material.getQuantite()))
+            .append(" ").append(material.getTypeComposant())
+            .append(" x ").append(String.format("%.2f", material.getCoutUnitaire()))
+            .append("€ = ").append(String.format("%.2f", material.calculateCost()))
+            .append("€\n");
         }
     }
 
     private void appendLaborDetails(StringBuilder quote, Project project) {
         quote.append("\nMain d'œuvre:\n");
         for (Labor labor : project.getLaborItems()) {
-            quote.append("- ").append(labor.getDescription())
-                 .append(": ").append(String.format("%.2f", labor.getHours()))
-                 .append("h x ").append(String.format("%.2f", labor.getHourlyRate()))
-                 .append("€/h = ").append(String.format("%.2f", labor.getCost()))
+            quote.append("- ").append(labor.getName())
+                 .append(": ").append(String.format("%.2f", labor.getHeuresTravail()))
+                 .append("h x ").append(String.format("%.2f", labor.getTauxHoraire()))
+                 .append("€/h x ").append(String.format("%.2f", labor.getProductiviteOuvrier()))
+                 .append(" = ").append(String.format("%.2f", labor.calculateCost()))
                  .append("€\n");
         }
     }
@@ -85,4 +85,13 @@ public class QuoteGenerator {
         quote.append("Coût par mètre carré: ").append(String.format("%.2f", costPerSquareMeter)).append("€/m²\n");
     }
 
+    public void saveQuote(Quote quote) {
+        try {
+            quoteRepository.saveQuote(quote);
+            LOGGER.info("Devis enregistré : " + quote.getId());
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.SEVERE, "Erreur lors de l'enregistrement du devis", e);
+            throw new RuntimeException("Échec de l'enregistrement du devis", e);
+        }
+    }
 }

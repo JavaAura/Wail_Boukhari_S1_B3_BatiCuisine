@@ -41,6 +41,10 @@ public class Client {
     public boolean isProfessional() { return isProfessional; }
     public void setProfessional(boolean isProfessional) { this.isProfessional = isProfessional; }
 
+    public double getDiscountRate() {
+        return isProfessional ? 0.05 : 0.0;
+    }
+
     @Override
     public String toString() {
         return "Client{" +

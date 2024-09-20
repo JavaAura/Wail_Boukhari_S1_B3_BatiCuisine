@@ -1,6 +1,8 @@
 package com.baticuisine.model;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class Quote {
@@ -11,6 +13,7 @@ public class Quote {
     private LocalDate validityDate;
     private boolean accepted;
     private String content;
+    private List<Component> components;
 
     public Quote(Project project, double estimatedAmount, LocalDate issueDate, LocalDate validityDate) {
         this.id = UUID.randomUUID();
@@ -19,6 +22,7 @@ public class Quote {
         this.issueDate = issueDate;
         this.validityDate = validityDate;
         this.accepted = false;
+        this.components = new ArrayList<>();
     }
 
     // Getters and setters
@@ -42,6 +46,18 @@ public class Quote {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
+    public List<Component> getComponents() {
+        return components;
+    }
+
+    public void setComponents(List<Component> components) {
+        this.components = components;
+    }
+
+    public void addComponent(Component component) {
+        this.components.add(component);
+    }
+
     @Override
     public String toString() {
         return "Quote{" +
@@ -51,6 +67,7 @@ public class Quote {
                 ", issueDate=" + issueDate +
                 ", validityDate=" + validityDate +
                 ", accepted=" + accepted +
+                ", components=" + components +
                 '}';
     }
 }

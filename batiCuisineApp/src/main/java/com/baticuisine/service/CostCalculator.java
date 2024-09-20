@@ -11,30 +11,34 @@ import com.baticuisine.model.Project;
 public class CostCalculator {
     private static final Logger LOGGER = Logger.getLogger(CostCalculator.class.getName());
     private final MaterialService materialService;
-
+    private static final double DEFAULT_TVA_RATE = 0.20;
+    
     public CostCalculator(MaterialService materialService) {
         this.materialService = materialService;
     }
 
     public double calculateTotalCost(Project project) {
-        LOGGER.info("Calculating total cost for project: " + project.getName());
-        try {
-            double materialCost = calculateMaterialCost(project);
-            double laborCost = calculateLaborCost(project);
-            return materialCost + laborCost;
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error calculating total cost for project: " + project.getName(), e);
-            throw new RuntimeException("Failed to calculate total cost", e);
-        }
+        double materialCost = calculateMaterialCost(project);
+        double laborCost = calculateLaborCost(project);
+        double subtotal = materialCost + laborCost;
+        
+        // Apply client discount
+        double discountRate = project.getClient().getDiscountRate();
+        double discountedSubtotal = subtotal * (1 - discountRate);
+        
+        // Apply TVA
+        double totalWithTVA = discountedSubtotal * (1 + DEFAULT_TVA_RATE);
+        
+        return totalWithTVA;
     }
 
     private double calculateMaterialCost(Project project) {
         return materialService.calculateTotalCost(project.getMaterials());
     }
-
+    
     private double calculateLaborCost(Project project) {
         return project.getLaborItems().stream()
-                .mapToDouble(Labor::getCost)
+                .mapToDouble(Labor::calculateCost)
                 .sum();
     }
 

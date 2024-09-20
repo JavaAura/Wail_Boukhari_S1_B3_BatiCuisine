@@ -3,7 +3,8 @@ package com.baticuisine.model.enums;
 public enum ProjectStatus {
     EN_COURS("En cours"),
     TERMINE("Terminé"),
-    ANNULE("Annulé");
+    ANNULE("Annulé"),
+    EN_ATTENTE("En attente");
 
     private final String displayName;
 

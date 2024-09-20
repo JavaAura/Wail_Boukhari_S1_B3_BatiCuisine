@@ -109,10 +109,18 @@ public class ProjectRepository {
             rs.getString("name"),
             rs.getDouble("surface"),
             rs.getDate("start_date").toLocalDate(),
-            ProjectStatus.valueOf(rs.getString("status"))
+            getProjectStatus(rs.getString("status"))
         );
         project.setId((UUID) rs.getObject("id"));
-        // Note: You'll need to fetch and set the client, materials, and labor items separately
         return project;
+    }
+
+    private ProjectStatus getProjectStatus(String status) {
+        try {
+            return ProjectStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            LOGGER.warning("Unknown project status: " + status + ". Defaulting to EN_COURS.");
+            return ProjectStatus.EN_COURS;
+        }
     }
 }

@@ -65,14 +65,13 @@ public class MaterialUI {
         LOGGER.info("Starting new material creation process");
         System.out.println("=== Ajout d'un nouveau matériau ===");
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
-        double unitPrice = inputValidator.getValidDoubleInput(scanner, "Prix unitaire : ");
-        String unit = inputValidator.getValidStringInput(scanner, "Unité de mesure : ");
-        MaterialType type = getValidMaterialType();
-        double vatRate = inputValidator.getValidDoubleInput(scanner, "Taux de TVA (%) : ");
-        double transportCost = inputValidator.getValidDoubleInput(scanner, "Coût de transport : ");
-        double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité : ");
+        double coutUnitaire = inputValidator.getValidDoubleInput(scanner, "Coût unitaire : ");
+        double quantite = inputValidator.getValidDoubleInput(scanner, "Quantité : ");
+        double tauxTVA = inputValidator.getValidDoubleInput(scanner, "Taux de TVA (%) : ");
+        double coutTransport = inputValidator.getValidDoubleInput(scanner, "Coût de transport : ");
+        double coefficientQualite = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité : ");
     
-        Material newMaterial = new Material(name, unitPrice, unit, type, vatRate, transportCost, qualityCoefficient);
+        Material newMaterial = new Material(name, coutUnitaire, quantite, tauxTVA, coutTransport, coefficientQualite);
         materialService.createMaterial(newMaterial);
         LOGGER.info("New material created: " + name);
         System.out.println("Matériau ajouté avec succès !");
@@ -88,9 +87,12 @@ public class MaterialUI {
             for (Material material : materials) {
                 System.out.println("--------------------");
                 System.out.println("Nom: " + material.getName());
-                System.out.println("Prix unitaire: " + material.getUnitPrice() + " €");
-                System.out.println("Unité: " + material.getUnit());
-                System.out.println("Type: " + material.getType());
+                System.out.println("Coût unitaire: " + material.getCoutUnitaire() + " €");
+                System.out.println("Quantité: " + material.getQuantite());
+                System.out.println("Taux TVA: " + material.getTauxTVA() + "%");
+                System.out.println("Coût transport: " + material.getCoutTransport() + " €");
+                System.out.println("Coefficient qualité: " + material.getCoefficientQualite());
+                System.out.println("Coût total: " + String.format("%.2f", material.calculateCost()) + " €");
                 System.out.println("--------------------");
             }
         }
@@ -105,19 +107,17 @@ public class MaterialUI {
     
         if (materialOpt.isPresent()) {
             Material material = materialOpt.get();
-            double unitPrice = inputValidator.getValidDoubleInput(scanner, "Nouveau prix unitaire : ");
-            String unit = inputValidator.getValidStringInput(scanner, "Nouvelle unité de mesure : ");
-            MaterialType type = getValidMaterialType();
-            double vatRate = inputValidator.getValidDoubleInput(scanner, "Nouveau taux de TVA (%) : ");
-            double transportCost = inputValidator.getValidDoubleInput(scanner, "Nouveau coût de transport : ");
-            double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Nouveau coefficient de qualité : ");
+            double coutUnitaire = inputValidator.getValidDoubleInput(scanner, "Nouveau coût unitaire : ");
+            double quantite = inputValidator.getValidDoubleInput(scanner, "Nouvelle quantité : ");
+            double tauxTVA = inputValidator.getValidDoubleInput(scanner, "Nouveau taux de TVA (%) : ");
+            double coutTransport = inputValidator.getValidDoubleInput(scanner, "Nouveau coût de transport : ");
+            double coefficientQualite = inputValidator.getValidDoubleInput(scanner, "Nouveau coefficient de qualité : ");
     
-            material.setUnitPrice(unitPrice);
-            material.setUnit(unit);
-            material.setType(type);
-            material.setVatRate(vatRate);
-            material.setTransportCost(transportCost);
-            material.setQualityCoefficient(qualityCoefficient);
+            material.setCoutUnitaire(coutUnitaire);
+            material.setQuantite(quantite);
+            material.setTauxTVA(tauxTVA);
+            material.setCoutTransport(coutTransport);
+            material.setCoefficientQualite(coefficientQualite);
     
             materialService.updateMaterial(material);
             LOGGER.info("Material updated: " + name);

@@ -1,74 +1,34 @@
 package com.baticuisine.model;
 
-import java.util.UUID;
+public class Material extends Component {
+    private double coutUnitaire;
+    private double quantite;
+    private double coutTransport;
+    private double coefficientQualite;
 
-import com.baticuisine.model.enums.MaterialType;
-
-public class Material {
-    private UUID id;
-    private String name;
-    private double unitPrice;
-    private double quantity;
-    private String unit;
-    private MaterialType type;
-    private double vatRate;
-    private double transportCost;
-    private double qualityCoefficient;
-
-    public Material(UUID id, String name, double unitPrice, String unit, MaterialType type, double vatRate, double transportCost, double qualityCoefficient) {
-        this.id = id;
-        this.name = name;
-        this.unitPrice = unitPrice;
-        this.unit = unit;
-        this.type = type;
-        this.vatRate = vatRate;
-        this.transportCost = transportCost;
-        this.qualityCoefficient = qualityCoefficient;
-    }
-
-    public Material(String name, double unitPrice, String unit, MaterialType type, double vatRate, double transportCost, double qualityCoefficient) {
-        this(UUID.randomUUID(), name, unitPrice, unit, type, vatRate, transportCost, qualityCoefficient);
+    public Material(String name, double coutUnitaire, double quantite, double tauxTVA, double coutTransport, double coefficientQualite) {
+        super(name, "Matériel", tauxTVA);
+        this.coutUnitaire = coutUnitaire;
+        this.quantite = quantite;
+        this.coutTransport = coutTransport;
+        this.coefficientQualite = coefficientQualite;
     }
 
     // Getters and setters
-    public UUID getId() { return id; }
+    public double getCoutUnitaire() { return coutUnitaire; }
+    public void setCoutUnitaire(double coutUnitaire) { this.coutUnitaire = coutUnitaire; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public double getQuantite() { return quantite; }
+    public void setQuantite(double quantite) { this.quantite = quantite; }
 
-    public double getUnitPrice() { return unitPrice; }
-    public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+    public double getCoutTransport() { return coutTransport; }
+    public void setCoutTransport(double coutTransport) { this.coutTransport = coutTransport; }
 
-    public String getUnit() { return unit; }
-    public void setUnit(String unit) { this.unit = unit; }
-
-    public double getQuantity() { return quantity; }
-    public void setQuantity(double quantity) { this.quantity = quantity; }
-
-    public MaterialType getType() { return type; }
-    public void setType(MaterialType type) { this.type = type; }
-
-    public double getVatRate() { return vatRate; }
-    public void setVatRate(double vatRate) { this.vatRate = vatRate; }
-
-    public double getTransportCost() { return transportCost; }
-    public void setTransportCost(double transportCost) { this.transportCost = transportCost; }
-
-    public double getQualityCoefficient() { return qualityCoefficient; }
-    public void setQualityCoefficient(double qualityCoefficient) { this.qualityCoefficient = qualityCoefficient; }
+    public double getCoefficientQualite() { return coefficientQualite; }
+    public void setCoefficientQualite(double coefficientQualite) { this.coefficientQualite = coefficientQualite; }
 
     @Override
-    public String toString() {
-        return "Material{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", unitPrice=" + unitPrice +
-                ", unit='" + unit + '\'' +
-                ", quantity=" + quantity +
-                ", type=" + type +
-                ", vatRate=" + vatRate +
-                ", transportCost=" + transportCost +
-                ", qualityCoefficient=" + qualityCoefficient +
-                '}';
+    public double calculateCost() {
+        return (coutUnitaire * quantite + coutTransport) * coefficientQualite * (1 + tauxTVA / 100);
     }
 }
