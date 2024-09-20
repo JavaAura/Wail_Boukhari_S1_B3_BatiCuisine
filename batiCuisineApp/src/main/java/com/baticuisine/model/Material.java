@@ -1,25 +1,33 @@
 package com.baticuisine.model;
 
 import java.util.UUID;
+
+import com.baticuisine.model.enums.MaterialType;
+
 public class Material {
     private UUID id;
     private String name;
     private double unitPrice;
+    private double quantity;
     private String unit;
-    private int quantity;
-    private String type;
+    private MaterialType type;
+    private double vatRate;
+    private double transportCost;
+    private double qualityCoefficient;
 
-    public Material(UUID id, String name, double unitPrice, String unit, String type) {
+    public Material(UUID id, String name, double unitPrice, String unit, MaterialType type, double vatRate, double transportCost, double qualityCoefficient) {
         this.id = id;
         this.name = name;
         this.unitPrice = unitPrice;
         this.unit = unit;
-        this.quantity = 0;
         this.type = type;
+        this.vatRate = vatRate;
+        this.transportCost = transportCost;
+        this.qualityCoefficient = qualityCoefficient;
     }
 
-    public Material(String name, double unitPrice, String unit, String type) {
-        this(UUID.randomUUID(), name, unitPrice, unit, type);
+    public Material(String name, double unitPrice, String unit, MaterialType type, double vatRate, double transportCost, double qualityCoefficient) {
+        this(UUID.randomUUID(), name, unitPrice, unit, type, vatRate, transportCost, qualityCoefficient);
     }
 
     // Getters and setters
@@ -34,11 +42,20 @@ public class Material {
     public String getUnit() { return unit; }
     public void setUnit(String unit) { this.unit = unit; }
 
-    public int getQuantity() { return quantity; }
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
 
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
+    public MaterialType getType() { return type; }
+    public void setType(MaterialType type) { this.type = type; }
+
+    public double getVatRate() { return vatRate; }
+    public void setVatRate(double vatRate) { this.vatRate = vatRate; }
+
+    public double getTransportCost() { return transportCost; }
+    public void setTransportCost(double transportCost) { this.transportCost = transportCost; }
+
+    public double getQualityCoefficient() { return qualityCoefficient; }
+    public void setQualityCoefficient(double qualityCoefficient) { this.qualityCoefficient = qualityCoefficient; }
 
     @Override
     public String toString() {
@@ -49,6 +66,9 @@ public class Material {
                 ", unit='" + unit + '\'' +
                 ", quantity=" + quantity +
                 ", type=" + type +
+                ", vatRate=" + vatRate +
+                ", transportCost=" + transportCost +
+                ", qualityCoefficient=" + qualityCoefficient +
                 '}';
     }
 }

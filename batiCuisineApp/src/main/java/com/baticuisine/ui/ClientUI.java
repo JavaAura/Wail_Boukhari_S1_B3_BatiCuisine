@@ -3,6 +3,7 @@ package com.baticuisine.ui;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.baticuisine.model.Client;
@@ -33,24 +34,29 @@ public class ClientUI {
 
             int choice = inputValidator.getValidIntInput(scanner, "Choisissez une option : ");
 
-            switch (choice) {
-                case 1:
-                    addClient();
-                    break;
-                case 2:
-                    displayAllClients();
-                    break;
-                case 3:
-                    updateClient();
-                    break;
-                case 4:
-                    deleteClient();
-                    break;
-                case 5:
-                    running = false;
-                    break;
-                default:
-                    System.out.println("Option invalide. Veuillez réessayer.");
+            try {
+                switch (choice) {
+                    case 1:
+                        addClient();
+                        break;
+                    case 2:
+                        displayAllClients();
+                        break;
+                    case 3:
+                        updateClient();
+                        break;
+                    case 4:
+                        deleteClient();
+                        break;
+                    case 5:
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Option invalide. Veuillez réessayer.");
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "An error occurred while managing clients", e);
+                System.out.println("Une erreur est survenue. Veuillez réessayer.");
             }
         }
     }
@@ -61,8 +67,10 @@ public class ClientUI {
         String name = inputValidator.getValidStringInput(scanner, "Nom du client : ");
         String email = inputValidator.getValidEmailInput(scanner, "Email du client : ");
         String phone = inputValidator.getValidPhoneInput(scanner, "Numéro de téléphone du client : ");
-
-        Client newClient = new Client(name, email, phone);
+        String address = inputValidator.getValidStringInput(scanner, "Adresse du client : ");
+        boolean isActive = true; // By default, new clients are active
+    
+        Client newClient = new Client(name, email, phone, address, isActive);
         clientService.createClient(newClient);
         LOGGER.info("New client created: " + name);
         System.out.println("Client ajouté avec succès !");
@@ -72,7 +80,17 @@ public class ClientUI {
         LOGGER.info("Displaying all clients");
         System.out.println("=== Liste de tous les clients ===");
         List<Client> clients = clientService.getAllClients();
-        clients.forEach(System.out::println);
+        if (clients.isEmpty()) {
+            System.out.println("Aucun client trouvé.");
+        } else {
+            for (Client client : clients) {
+                System.out.println("--------------------");
+                System.out.println("Nom: " + client.getName());
+                System.out.println("Email: " + client.getEmail());
+                System.out.println("Téléphone: " + client.getPhone());
+                System.out.println("--------------------");
+            }
+        }
     }
 
     private void updateClient() {
@@ -103,8 +121,18 @@ public class ClientUI {
         System.out.println("=== Suppression d'un client ===");
         String name = inputValidator.getValidStringInput(scanner, "Nom du client à supprimer : ");
 
-        clientService.deleteClient(name);
-        LOGGER.info("Client deleted: " + name);
-        System.out.println("Client supprimé avec succès !");
+        Optional<Client> clientOpt = clientService.getClientByName(name);
+        if (clientOpt.isPresent()) {
+            boolean confirm = inputValidator.getValidBooleanInput(scanner, "Êtes-vous sûr de vouloir supprimer ce client ? (oui/non) : ");
+            if (confirm) {
+                clientService.deleteClient(name);
+                LOGGER.info("Client deleted: " + name);
+                System.out.println("Client supprimé avec succès !");
+            } else {
+                System.out.println("Suppression annulée.");
+            }
+        } else {
+            System.out.println("Client non trouvé.");
+        }
     }
 }

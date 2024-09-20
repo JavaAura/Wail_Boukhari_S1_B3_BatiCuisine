@@ -26,7 +26,19 @@ public class InputValidator {
             }
         }
     }
-
+    public boolean getValidBooleanInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim().toLowerCase();
+            if (input.equals("oui") || input.equals("o")) {
+                return true;
+            } else if (input.equals("non") || input.equals("n")) {
+                return false;
+            } else {
+                System.out.println("Veuillez répondre par 'oui' ou 'non'.");
+            }
+        }
+    }
     public int getValidIntInput(Scanner scanner, String prompt) {
         while (true) {
             System.out.print(prompt);

@@ -7,16 +7,20 @@ public class Client {
     private String name;
     private String email;
     private String phone;
+    private String address;
+    private boolean isProfessional;
 
-    public Client(UUID id, String name, String email, String phone) {
+    public Client(UUID id, String name, String email, String phone, String address, boolean isProfessional) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.phone = phone;
+        this.address = address;
+        this.isProfessional = isProfessional;
     }
 
-    public Client(String name, String email, String phone) {
-        this(UUID.randomUUID(), name, email, phone);
+    public Client(String name, String email, String phone, String address, boolean isProfessional) {
+        this(UUID.randomUUID(), name, email, phone, address, isProfessional);
     }
 
     // Getters and setters
@@ -31,6 +35,12 @@ public class Client {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
+
+    public boolean isProfessional() { return isProfessional; }
+    public void setProfessional(boolean isProfessional) { this.isProfessional = isProfessional; }
+
     @Override
     public String toString() {
         return "Client{" +
@@ -38,6 +48,8 @@ public class Client {
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
                 ", phone='" + phone + '\'' +
+                ", address='" + address + '\'' +
+                ", isProfessional=" + isProfessional +
                 '}';
     }
 }

@@ -10,6 +10,7 @@ import com.baticuisine.database.DatabaseConnection;
 import com.baticuisine.repository.ClientRepository;
 import com.baticuisine.repository.MaterialRepository;
 import com.baticuisine.repository.ProjectRepository;
+import com.baticuisine.repository.QuoteRepository;
 import com.baticuisine.service.ClientService;
 import com.baticuisine.service.CostCalculator;
 import com.baticuisine.service.MaterialService;
@@ -36,6 +37,7 @@ public class Main {
             repositories.put("project", new ProjectRepository(connection));
             repositories.put("client", new ClientRepository(connection));
             repositories.put("material", new MaterialRepository(connection));
+            repositories.put("quote", new QuoteRepository(connection));
 
             InputValidator inputValidator = new InputValidator();
             DateUtils dateUtils = new DateUtils();
@@ -46,7 +48,7 @@ public class Main {
             services.put("material", new MaterialService((MaterialRepository) repositories.get("material")));
 
             CostCalculator costCalculator = new CostCalculator((MaterialService) services.get("material"));
-            QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator);
+            QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, (QuoteRepository) repositories.get("quote"));
 
             MainMenu mainMenu = new MainMenu();
             ProjectUI projectUI = new ProjectUI((ProjectService) services.get("project"), costCalculator, inputValidator, quoteGenerator);
@@ -63,32 +65,22 @@ public class Main {
     }
 
     private static void runApplication(MainMenu mainMenu, ProjectUI projectUI, ClientUI clientUI, MaterialUI materialUI) {
-        boolean running = true;
-        while (running) {
-            int choice = mainMenu.display();
+        while (true) {
+            MainMenu.MenuOption choice = mainMenu.display();
             switch (choice) {
-                case 1:
-                    projectUI.createNewProject();
+                case MANAGE_PROJECTS:
+                    projectUI.manageProjects();
                     break;
-                case 2:
-                    projectUI.displayExistingProjects();
-                    break;
-                case 3:
-                    projectUI.calculateProjectCost();
-                    break;
-                case 4:
+                case MANAGE_CLIENTS:
                     clientUI.manageClients();
                     break;
-                case 5:
+                case MANAGE_MATERIALS:
                     materialUI.manageMaterials();
                     break;
-                case 6:
-                    running = false;
+                case EXIT:
                     LOGGER.info("Application shutting down");
                     System.out.println("Au revoir !");
-                    break;
-                default:
-                    System.out.println("Option invalide. Veuillez réessayer.");
+                    return;
             }
         }
     }

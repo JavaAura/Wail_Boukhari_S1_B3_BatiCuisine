@@ -7,12 +7,16 @@ public class Labor {
     private String description;
     private double hourlyRate;
     private double hours;
+    private double productivityFactor;
+    private double vatRate;
 
-    public Labor(String description, double hourlyRate, double hours) {
+    public Labor(String description, double hourlyRate, double hours, double productivityFactor, double vatRate) {
         this.id = UUID.randomUUID();
         this.description = description;
         this.hourlyRate = hourlyRate;
         this.hours = hours;
+        this.productivityFactor = productivityFactor;
+        this.vatRate = vatRate;
     }
 
     // Getters and setters
@@ -27,8 +31,14 @@ public class Labor {
     public double getHours() { return hours; }
     public void setHours(double hours) { this.hours = hours; }
 
+    public double getProductivityFactor() { return productivityFactor; }
+    public void setProductivityFactor(double productivityFactor) { this.productivityFactor = productivityFactor; }
+
+    public double getVatRate() { return vatRate; }
+    public void setVatRate(double vatRate) { this.vatRate = vatRate; }
+
     public double getCost() {
-        return hourlyRate * hours;
+        return hourlyRate * hours * productivityFactor * (1 + vatRate / 100);
     }
 
     @Override
@@ -38,6 +48,8 @@ public class Labor {
                 ", description='" + description + '\'' +
                 ", hourlyRate=" + hourlyRate +
                 ", hours=" + hours +
+                ", productivityFactor=" + productivityFactor +
+                ", vatRate=" + vatRate +
                 '}';
     }
 }

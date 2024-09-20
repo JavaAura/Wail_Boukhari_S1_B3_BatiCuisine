@@ -1,12 +1,16 @@
 package com.baticuisine.repository;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.baticuisine.model.Client;
 
@@ -19,12 +23,14 @@ public class ClientRepository {
     }
 
     public void save(Client client) {
-        String sql = "INSERT INTO clients (id, name, email, phone) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO clients (id, name, email, phone, address, is_professional) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setObject(1, client.getId());
             pstmt.setString(2, client.getName());
             pstmt.setString(3, client.getEmail());
             pstmt.setString(4, client.getPhone());
+            pstmt.setString(5, client.getAddress());
+            pstmt.setBoolean(6, client.isProfessional());
             pstmt.executeUpdate();
             LOGGER.info("Client saved: " + client.getName());
         } catch (SQLException e) {
@@ -65,11 +71,13 @@ public class ClientRepository {
     }
 
     public void update(Client client) {
-        String sql = "UPDATE clients SET email = ?, phone = ? WHERE id = ?";
+        String sql = "UPDATE clients SET email = ?, phone = ?, address = ?, is_professional = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, client.getEmail());
             pstmt.setString(2, client.getPhone());
-            pstmt.setObject(3, client.getId());
+            pstmt.setString(3, client.getAddress());
+            pstmt.setBoolean(4, client.isProfessional());
+            pstmt.setObject(5, client.getId());
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
                 LOGGER.info("Client updated: " + client.getName());
@@ -103,7 +111,9 @@ public class ClientRepository {
             (UUID) rs.getObject("id"),
             rs.getString("name"),
             rs.getString("email"),
-            rs.getString("phone")
+            rs.getString("phone"),
+            rs.getString("address"),
+            rs.getBoolean("is_professional")
         );
     }
 }

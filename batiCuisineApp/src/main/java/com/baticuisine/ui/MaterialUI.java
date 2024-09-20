@@ -3,9 +3,11 @@ package com.baticuisine.ui;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.baticuisine.model.Material;
+import com.baticuisine.model.enums.MaterialType;
 import com.baticuisine.service.MaterialService;
 import com.baticuisine.utils.InputValidator;
 
@@ -33,36 +35,44 @@ public class MaterialUI {
 
             int choice = inputValidator.getValidIntInput(scanner, "Choisissez une option : ");
 
-            switch (choice) {
-                case 1:
-                    addMaterial();
-                    break;
-                case 2:
-                    displayAllMaterials();
-                    break;
-                case 3:
-                    updateMaterial();
-                    break;
-                case 4:
-                    deleteMaterial();
-                    break;
-                case 5:
-                    running = false;
-                    break;
-                default:
-                    System.out.println("Option invalide. Veuillez réessayer.");
+            try {
+                switch (choice) {
+                    case 1:
+                        addMaterial();
+                        break;
+                    case 2:
+                        displayAllMaterials();
+                        break;
+                    case 3:
+                        updateMaterial();
+                        break;
+                    case 4:
+                        deleteMaterial();
+                        break;
+                    case 5:
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Option invalide. Veuillez réessayer.");
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "An error occurred while managing materials", e);
+                System.out.println("Une erreur est survenue. Veuillez réessayer.");
             }
         }
     }
-
     private void addMaterial() {
         LOGGER.info("Starting new material creation process");
         System.out.println("=== Ajout d'un nouveau matériau ===");
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
         double unitPrice = inputValidator.getValidDoubleInput(scanner, "Prix unitaire : ");
         String unit = inputValidator.getValidStringInput(scanner, "Unité de mesure : ");
-        String type = inputValidator.getValidStringInput(scanner, "Type de matériau (APPLIANCE, CABINET, COUNTERTOP, PLUMBING, ELECTRICAL, FLOORING, PAINT, HARDWARE, OTHER) : ");
-        Material newMaterial = new Material(name, unitPrice, unit, type);
+        MaterialType type = getValidMaterialType();
+        double vatRate = inputValidator.getValidDoubleInput(scanner, "Taux de TVA (%) : ");
+        double transportCost = inputValidator.getValidDoubleInput(scanner, "Coût de transport : ");
+        double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité : ");
+    
+        Material newMaterial = new Material(name, unitPrice, unit, type, vatRate, transportCost, qualityCoefficient);
         materialService.createMaterial(newMaterial);
         LOGGER.info("New material created: " + name);
         System.out.println("Matériau ajouté avec succès !");
@@ -72,26 +82,43 @@ public class MaterialUI {
         LOGGER.info("Displaying all materials");
         System.out.println("=== Liste de tous les matériaux ===");
         List<Material> materials = materialService.getAllMaterials();
-        materials.forEach(System.out::println);
+        if (materials.isEmpty()) {
+            System.out.println("Aucun matériau trouvé.");
+        } else {
+            for (Material material : materials) {
+                System.out.println("--------------------");
+                System.out.println("Nom: " + material.getName());
+                System.out.println("Prix unitaire: " + material.getUnitPrice() + " €");
+                System.out.println("Unité: " + material.getUnit());
+                System.out.println("Type: " + material.getType());
+                System.out.println("--------------------");
+            }
+        }
     }
 
     private void updateMaterial() {
         LOGGER.info("Starting material update process");
         System.out.println("=== Mise à jour d'un matériau ===");
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau à mettre à jour : ");
-
+    
         Optional<Material> materialOpt = materialService.getMaterialByName(name);
-
+    
         if (materialOpt.isPresent()) {
             Material material = materialOpt.get();
             double unitPrice = inputValidator.getValidDoubleInput(scanner, "Nouveau prix unitaire : ");
             String unit = inputValidator.getValidStringInput(scanner, "Nouvelle unité de mesure : ");
-            String type = inputValidator.getValidStringInput(scanner, "Nouveau type de matériau (APPLIANCE, CABINET, COUNTERTOP, PLUMBING, ELECTRICAL, FLOORING, PAINT, HARDWARE, OTHER) : ");
-
+            MaterialType type = getValidMaterialType();
+            double vatRate = inputValidator.getValidDoubleInput(scanner, "Nouveau taux de TVA (%) : ");
+            double transportCost = inputValidator.getValidDoubleInput(scanner, "Nouveau coût de transport : ");
+            double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Nouveau coefficient de qualité : ");
+    
             material.setUnitPrice(unitPrice);
             material.setUnit(unit);
             material.setType(type);
-
+            material.setVatRate(vatRate);
+            material.setTransportCost(transportCost);
+            material.setQualityCoefficient(qualityCoefficient);
+    
             materialService.updateMaterial(material);
             LOGGER.info("Material updated: " + name);
             System.out.println("Matériau mis à jour avec succès !");
@@ -105,8 +132,33 @@ public class MaterialUI {
         System.out.println("=== Suppression d'un matériau ===");
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau à supprimer : ");
 
-        materialService.deleteMaterial(name);
-        LOGGER.info("Material deleted: " + name);
-        System.out.println("Matériau supprimé avec succès !");
+        Optional<Material> materialOpt = materialService.getMaterialByName(name);
+        if (materialOpt.isPresent()) {
+            boolean confirm = inputValidator.getValidBooleanInput(scanner, "Êtes-vous sûr de vouloir supprimer ce matériau ? (oui/non) : ");
+            if (confirm) {
+                materialService.deleteMaterial(name);
+                LOGGER.info("Material deleted: " + name);
+                System.out.println("Matériau supprimé avec succès !");
+            } else {
+                System.out.println("Suppression annulée.");
+            }
+        } else {
+            System.out.println("Matériau non trouvé.");
+        }
+    }
+
+    private MaterialType getValidMaterialType() {
+        while (true) {
+            System.out.println("Types de matériau disponibles :");
+            for (MaterialType type : MaterialType.values()) {
+                System.out.println("- " + type.name());
+            }
+            String typeInput = inputValidator.getValidStringInput(scanner, "Type de matériau : ");
+            try {
+                return MaterialType.valueOf(typeInput.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                System.out.println("Type de matériau invalide. Veuillez réessayer.");
+            }
+        }
     }
 }
