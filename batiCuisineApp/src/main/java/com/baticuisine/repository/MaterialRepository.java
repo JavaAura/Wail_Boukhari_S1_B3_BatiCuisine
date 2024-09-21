@@ -23,15 +23,14 @@ public class MaterialRepository {
     }
 
     public void save(Material material) {
-        String sql = "INSERT INTO materials (id, name, cout_unitaire, quantite, taux_tva, cout_transport, coefficient_qualite) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO materials (id, name, cout_unitaire, quantite, cout_transport, coefficient_qualite) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, material.getId());
+            pstmt.setObject(1, UUID.randomUUID());
             pstmt.setString(2, material.getName());
             pstmt.setDouble(3, material.getCoutUnitaire());
             pstmt.setDouble(4, material.getQuantite());
-            pstmt.setDouble(5, material.getTauxTVA());
-            pstmt.setDouble(6, material.getCoutTransport());
-            pstmt.setDouble(7, material.getCoefficientQualite());
+            pstmt.setDouble(5, material.getCoutTransport());
+            pstmt.setDouble(6, material.getCoefficientQualite());
             pstmt.executeUpdate();
             LOGGER.info("Material saved: " + material.getName());
         } catch (SQLException e) {
@@ -113,7 +112,6 @@ public class MaterialRepository {
                 rs.getString("name"),
                 rs.getDouble("cout_unitaire"),
                 rs.getDouble("quantite"),
-                rs.getDouble("taux_tva"),
                 rs.getDouble("cout_transport"),
                 rs.getDouble("coefficient_qualite")
         );

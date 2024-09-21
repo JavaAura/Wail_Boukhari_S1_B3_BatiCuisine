@@ -18,6 +18,8 @@ public class Project {
     private Client client;
     private List<Labor> laborItems;
     private Map<Material, Double> materials;
+    private List<Material> materialsList;
+    private List<Labor> laborItemsList;
 
     public Project(String name, double surface, LocalDate startDate, ProjectStatus status) {
         this.id = UUID.randomUUID();
@@ -49,12 +51,29 @@ public class Project {
     public void setClient(Client client) { this.client = client; }
 
     public List<Labor> getLaborItems() { return laborItems; }
-    public void addLaborItem(Labor labor) { this.laborItems.add(labor); }
+    public void addLaborItem(Labor labor) { 
+        if (this.laborItems == null) {
+            this.laborItems = new ArrayList<>();
+        }
+        this.laborItems.add(labor); 
+    }
 
     public List<Material> getMaterials() { return new ArrayList<>(materials.keySet()); }
-    public void addMaterial(Material material, double quantity) { this.materials.put(material, quantity); }
+    public void addMaterial(Material material, double quantity) { 
+        if (this.materials == null) {
+            this.materials = new HashMap<>();
+        }
+        this.materials.put(material, quantity); 
+    }
 
     public Map<Material, Double> getMaterialsWithQuantities() { return new HashMap<>(materials); }
+
+    public void addMaterial(Material material) {
+        if (this.materials == null) {
+            this.materials = new ArrayList<>();
+        }
+        this.materials.add(material);
+    }
 
     @Override
     public String toString() {

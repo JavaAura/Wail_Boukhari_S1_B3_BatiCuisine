@@ -22,8 +22,8 @@ public class CostCalculator {
         double laborCost = calculateLaborCost(project);
         double subtotal = materialCost + laborCost;
         
-        // Apply client discount
-        double discountRate = project.getClient().getDiscountRate();
+        // Apply client discount if client exists
+        double discountRate = (project.getClient() != null) ? project.getClient().getDiscountRate() : 0.0;
         double discountedSubtotal = subtotal * (1 - discountRate);
         
         // Apply TVA

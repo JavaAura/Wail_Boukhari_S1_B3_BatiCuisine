@@ -67,11 +67,10 @@ public class MaterialUI {
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
         double coutUnitaire = inputValidator.getValidDoubleInput(scanner, "Coût unitaire : ");
         double quantite = inputValidator.getValidDoubleInput(scanner, "Quantité : ");
-        double tauxTVA = inputValidator.getValidDoubleInput(scanner, "Taux de TVA (%) : ");
         double coutTransport = inputValidator.getValidDoubleInput(scanner, "Coût de transport : ");
         double coefficientQualite = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité : ");
     
-        Material newMaterial = new Material(name, coutUnitaire, quantite, tauxTVA, coutTransport, coefficientQualite);
+        Material newMaterial = new Material(name, coutUnitaire, quantite, coutTransport, coefficientQualite);
         materialService.createMaterial(newMaterial);
         LOGGER.info("New material created: " + name);
         System.out.println("Matériau ajouté avec succès !");

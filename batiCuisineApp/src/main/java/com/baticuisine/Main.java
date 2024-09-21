@@ -45,7 +45,7 @@ public class Main {
             Map<String, Object> services = new HashMap<>();
             services.put("project", new ProjectService((ProjectRepository) repositories.get("project"), dateUtils));
             services.put("client", new ClientService((ClientRepository) repositories.get("client")));
-            services.put("material", new MaterialService((MaterialRepository) repositories.get("material")));
+            services.put("material", new MaterialService());
 
             CostCalculator costCalculator = new CostCalculator((MaterialService) services.get("material"));
             QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, (QuoteRepository) repositories.get("quote"));
@@ -73,9 +73,6 @@ public class Main {
                     break;
                 case MANAGE_CLIENTS:
                     clientUI.manageClients();
-                    break;
-                case MANAGE_MATERIALS:
-                    materialUI.manageMaterials();
                     break;
                 case EXIT:
                     LOGGER.info("Application shutting down");

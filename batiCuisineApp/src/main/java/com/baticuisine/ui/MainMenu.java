@@ -16,7 +16,6 @@ public class MainMenu {
     public enum MenuOption {
         MANAGE_PROJECTS,
         MANAGE_CLIENTS,
-        MANAGE_MATERIALS,
         EXIT
     }
 
@@ -30,7 +29,6 @@ public class MainMenu {
     private void initializeMenuOptions() {
         addMenuOption(MenuOption.MANAGE_PROJECTS, "Gérer les projets");
         addMenuOption(MenuOption.MANAGE_CLIENTS, "Gérer les clients");
-        addMenuOption(MenuOption.MANAGE_MATERIALS, "Gérer les matériaux");
         addMenuOption(MenuOption.EXIT, "Quitter");
     }
 
@@ -42,7 +40,7 @@ public class MainMenu {
         System.out.println("\n=== Menu Principal ===");
         System.out.println("1. Gérer les projets");
         System.out.println("2. Gérer les clients");
-        System.out.println("3. Gérer les matériaux");
+        System.out.println("3. Gérer les composants");
         System.out.println("4. Quitter");
 
         int choice;

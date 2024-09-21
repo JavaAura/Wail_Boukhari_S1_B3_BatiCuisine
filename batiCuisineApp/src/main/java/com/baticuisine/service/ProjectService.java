@@ -22,10 +22,15 @@ public class ProjectService {
 
     public void createProject(Project project) {
         try {
-            if (!dateUtils.isValidDate(project.getStartDate())) {
-                throw new IllegalArgumentException("Invalid start date");
-            }
             projectRepository.save(project);
+            for (Material material : project.getMaterials()) {
+                materialRepository.save(material);
+                materialRepository.addMaterialToProject(project.getId(), material.getId(), material.getQuantite());
+            }
+            for (Labor labor : project.getLaborItems()) {
+                laborRepository.save(labor);
+                laborRepository.addLaborToProject(project.getId(), labor.getId());
+            }
             LOGGER.info("Project created: " + project.getName());
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating project", e);

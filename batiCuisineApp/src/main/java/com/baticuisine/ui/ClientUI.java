@@ -68,12 +68,15 @@ public class ClientUI {
         String email = inputValidator.getValidEmailInput(scanner, "Email du client : ");
         String phone = inputValidator.getValidPhoneInput(scanner, "Numéro de téléphone du client : ");
         String address = inputValidator.getValidStringInput(scanner, "Adresse du client : ");
-        boolean isActive = true; // By default, new clients are active
+        boolean isProfessional = inputValidator.getValidBooleanInput(scanner, "Le client est-il un professionnel ? (oui/non) : ");
     
-        Client newClient = new Client(name, email, phone, address, isActive);
+        Client newClient = new Client(name, email, phone, address, isProfessional);
         clientService.createClient(newClient);
         LOGGER.info("New client created: " + name);
         System.out.println("Client ajouté avec succès !");
+        if (isProfessional) {
+            System.out.println("Ce client bénéficie d'une remise de " + (newClient.getDiscountRate() * 100) + "%");
+        }
     }
 
     private void displayAllClients() {

@@ -11,7 +11,7 @@ public class MaterialService {
     private static final Logger LOGGER = Logger.getLogger(MaterialService.class.getName());
     private final MaterialRepository materialRepository;
 
-    public MaterialService(MaterialRepository materialRepository) {
+    public MaterialService() {
         this.materialRepository = materialRepository;
     }
 

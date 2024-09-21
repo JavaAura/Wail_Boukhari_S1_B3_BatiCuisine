@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.baticuisine.model.Client;
@@ -101,87 +102,62 @@ public class ProjectUI {
     private void createNewProject() {
         LOGGER.info("Starting new project creation process");
         System.out.println("=== Création d'un nouveau projet ===");
-        String projectName = inputValidator.getValidStringInput(scanner, "Nom du projet : ");
-        double surface = inputValidator.getValidDoubleInput(scanner, "Surface de la cuisine (en m²) : ");
-        LocalDate startDate = inputValidator.getValidDateInput(scanner, "Date de début du projet (jj/mm/aaaa) : ");
+        try {
+            String projectName = inputValidator.getValidStringInput(scanner, "Nom du projet : ");
+            double surface = inputValidator.getValidDoubleInput(scanner, "Surface de la cuisine (en m²) : ");
+            LocalDate startDate = inputValidator.getValidDateInput(scanner, "Date de début du projet (jj/mm/aaaa) : ");
 
-        Project newProject = new Project(projectName, surface, startDate, ProjectStatus.EN_COURS);
+            Project newProject = new Project(projectName, surface, startDate, ProjectStatus.EN_COURS);
 
-        // Add materials
-        boolean addMoreMaterials = true;
-        while (addMoreMaterials) {
-            addMaterialToProject(newProject);
-            addMoreMaterials = inputValidator.getValidBooleanInput(scanner, "Voulez-vous ajouter un autre matériau ? (oui/non) : ");
-        }
-
-        // Add labor
-        boolean addMoreLabor = true;
-        while (addMoreLabor) {
-            addLaborToProject(newProject);
-            addMoreLabor = inputValidator.getValidBooleanInput(scanner, "Voulez-vous ajouter une autre main d'œuvre ? (oui/non) : ");
-        }
-
-        // Add client
-        addClientToProject(newProject);
-
-        projectService.createProject(newProject);
-        LOGGER.info("New project created: " + projectName);
-        System.out.println("Projet créé avec succès !");
-
-        // Ask about quote
-        boolean seeQuote = inputValidator.getValidBooleanInput(scanner, "Voulez-vous voir le devis ? (oui/non) : ");
-        if (seeQuote) {
-            Quote quote = quoteGenerator.generateQuote(newProject);
-            System.out.println(quote.toString());
-            System.out.println(quote.getContent());
-
-            boolean saveQuote = inputValidator.getValidBooleanInput(scanner, "Voulez-vous sauvegarder le devis ? (oui/non) : ");
-            if (saveQuote) {
-                quoteGenerator.saveQuote(quote);
-                System.out.println("Devis sauvegardé avec succès !");
+            // Add materials
+            boolean addMoreMaterials = true;
+            while (addMoreMaterials) {
+                addMaterialToProject(newProject);
+                addMoreMaterials = inputValidator.getValidBooleanInput(scanner, "Voulez-vous ajouter un autre matériau ? (oui/non) : ");
             }
+
+            // Add labor
+            boolean addMoreLabor = true;
+            while (addMoreLabor) {
+                addLaborToProject(newProject);
+                addMoreLabor = inputValidator.getValidBooleanInput(scanner, "Voulez-vous ajouter une autre main d'œuvre ? (oui/non) : ");
+            }
+
+            // Add client
+            addClientToProject(newProject);
+
+            projectService.createProject(newProject);
+            LOGGER.info("New project created: " + projectName);
+            System.out.println("Projet créé avec succès !");
+
+            // Ask about quote
+            boolean seeQuote = inputValidator.getValidBooleanInput(scanner, "Voulez-vous voir le devis ? (oui/non) : ");
+            if (seeQuote) {
+                Quote quote = quoteGenerator.generateQuote(newProject);
+                System.out.println(quote.toString());
+                System.out.println(quote.getContent());
+
+                boolean saveQuote = inputValidator.getValidBooleanInput(scanner, "Voulez-vous sauvegarder le devis ? (oui/non) : ");
+                if (saveQuote) {
+                    quoteGenerator.saveQuote(quote);
+                    System.out.println("Devis sauvegardé avec succès !");
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error creating new project", e);
+            System.out.println("Une erreur est survenue lors de la création du projet. Veuillez réessayer.");
         }
     }
 
     private void addMaterialToProject(Project project) {
-        boolean materialExists = inputValidator.getValidBooleanInput(scanner, "Le matériau existe-t-il déjà ? (oui/non) : ");
-        
-        if (materialExists) {
-            String materialName = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
-            Optional<Material> materialOpt = materialService.getMaterialByName(materialName);
-            
-            if (materialOpt.isPresent()) {
-                Material material = materialOpt.get();
-                double quantity = inputValidator.getValidDoubleInput(scanner, "Quantité : ");
-                project.addMaterial(material, quantity);
-            } else {
-                System.out.println("Matériau non trouvé. Création d'un nouveau matériau.");
-                createAndAddNewMaterial(project);
-            }
-        } else {
-            createAndAddNewMaterial(project);
-        }
-    }
-
-    private void createAndAddNewMaterial(Project project) {
-        Material newMaterial = createNewMaterial();
-        double quantity = inputValidator.getValidDoubleInput(scanner, "Quantité : ");
-        project.addMaterial(newMaterial, quantity);
-    }
-
-    private Material createNewMaterial() {
         String name = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
         double coutUnitaire = inputValidator.getValidDoubleInput(scanner, "Coût unitaire : ");
         double quantite = inputValidator.getValidDoubleInput(scanner, "Quantité : ");
-        double tauxTVA = inputValidator.getValidDoubleInput(scanner, "Taux de TVA (%) : ");
         double coutTransport = inputValidator.getValidDoubleInput(scanner, "Coût de transport : ");
         double coefficientQualite = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité : ");
     
-        Material newMaterial = new Material(name, coutUnitaire, quantite, tauxTVA, coutTransport, coefficientQualite);
-        materialService.createMaterial(newMaterial);
-        LOGGER.info("New material created: " + name);
-        System.out.println("Nouveau matériau créé avec succès !");
-        return newMaterial;
+        Material newMaterial = new Material(name, coutUnitaire, quantite, coutTransport, coefficientQualite);
+        project.addMaterial(newMaterial, quantite);
     }
 
     private void addLaborToProject(Project project) {

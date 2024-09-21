@@ -1,13 +1,14 @@
 package com.baticuisine.model;
 
 public class Material extends Component {
+    private static final double DEFAULT_TVA = 20.0;
     private double coutUnitaire;
     private double quantite;
     private double coutTransport;
     private double coefficientQualite;
 
-    public Material(String name, double coutUnitaire, double quantite, double tauxTVA, double coutTransport, double coefficientQualite) {
-        super(name, "Matériel", tauxTVA);
+    public Material(String name, double coutUnitaire, double quantite, double coutTransport, double coefficientQualite) {
+        super(name, "Matériel", DEFAULT_TVA);
         this.coutUnitaire = coutUnitaire;
         this.quantite = quantite;
         this.coutTransport = coutTransport;
@@ -29,6 +30,6 @@ public class Material extends Component {
 
     @Override
     public double calculateCost() {
-        return (coutUnitaire * quantite + coutTransport) * coefficientQualite * (1 + tauxTVA / 100);
+        return (coutUnitaire * quantite + coutTransport) * coefficientQualite * (1 + DEFAULT_TVA / 100);
     }
 }
