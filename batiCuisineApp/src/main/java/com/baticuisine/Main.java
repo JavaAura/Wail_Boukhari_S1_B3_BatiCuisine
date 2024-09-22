@@ -33,19 +33,22 @@ public class Main {
             DatabaseConnection dbConnection = DatabaseConnection.getInstance();
             Connection connection = dbConnection.getConnection();
 
+            MaterialRepository materialRepository = new MaterialRepository(connection);
+            MaterialService materialService = new MaterialService(materialRepository);
+
             Map<String, Object> repositories = new HashMap<>();
             repositories.put("project", new ProjectRepository(connection));
             repositories.put("client", new ClientRepository(connection));
-            repositories.put("material", new MaterialRepository(connection));
+            repositories.put("material", materialRepository);
             repositories.put("quote", new QuoteRepository(connection));
 
             InputValidator inputValidator = new InputValidator();
             DateUtils dateUtils = new DateUtils();
 
             Map<String, Object> services = new HashMap<>();
-            services.put("project", new ProjectService((ProjectRepository) repositories.get("project"), dateUtils));
+            services.put("project", new ProjectService((ProjectRepository) repositories.get("project"), dateUtils, materialRepository));
             services.put("client", new ClientService((ClientRepository) repositories.get("client")));
-            services.put("material", new MaterialService());
+            services.put("material", materialService);
 
             CostCalculator costCalculator = new CostCalculator((MaterialService) services.get("material"));
             QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, (QuoteRepository) repositories.get("quote"));

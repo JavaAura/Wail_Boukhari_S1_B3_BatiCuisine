@@ -2,90 +2,86 @@ package com.baticuisine.model;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import com.baticuisine.model.enums.ProjectStatus;
 
 public class Project {
-    private UUID id;
-    private String name;
+    private Long id;
+    private String projectName;
+    private double profitMargin;
+    private double totalCost;
+    private ProjectStatus projectStatus;
+    private Client client;
+    private List<Component> components;
     private double surface;
     private LocalDate startDate;
-    private ProjectStatus status;
-    private Client client;
-    private List<Labor> laborItems;
-    private Map<Material, Double> materials;
-    private List<Material> materialsList;
-    private List<Labor> laborItemsList;
 
-    public Project(String name, double surface, LocalDate startDate, ProjectStatus status) {
-        this.id = UUID.randomUUID();
-        this.name = name;
+    private List<Material> materials = new ArrayList<>();
+    private List<Labor> laborItems = new ArrayList<>();
+
+    public Project(String projectName, double surface, LocalDate startDate, ProjectStatus projectStatus, Client client) {
+        this.projectName = projectName;
         this.surface = surface;
         this.startDate = startDate;
-        this.status = status;
-        this.materials = new HashMap<>();
-        this.laborItems = new ArrayList<>();
+        this.projectStatus = projectStatus;
+        this.client = client;
+        this.components = new ArrayList<>();
+        this.profitMargin = 0;
+        this.totalCost = 0;
     }
 
     // Getters and setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getProjectName() { return projectName; }
+    public void setProjectName(String projectName) { this.projectName = projectName; }
+    public double getProfitMargin() { return profitMargin; }
+    public void setProfitMargin(double profitMargin) { this.profitMargin = profitMargin; }
+    public double getTotalCost() { return totalCost; }
+    public void setTotalCost(double totalCost) { this.totalCost = totalCost; }
+    public ProjectStatus getProjectStatus() { return projectStatus; }
+    public void setProjectStatus(ProjectStatus projectStatus) { this.projectStatus = projectStatus; }
+    public Client getClient() { return client; }
+    public void setClient(Client client) { this.client = client; }
+    public List<Component> getComponents() { return components; }
     public double getSurface() { return surface; }
     public void setSurface(double surface) { this.surface = surface; }
-
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public ProjectStatus getStatus() { return status; }
-    public void setStatus(ProjectStatus status) { this.status = status; }
-
-    public Client getClient() { return client; }
-    public void setClient(Client client) { this.client = client; }
-
-    public List<Labor> getLaborItems() { return laborItems; }
-    public void addLaborItem(Labor labor) { 
-        if (this.laborItems == null) {
-            this.laborItems = new ArrayList<>();
-        }
-        this.laborItems.add(labor); 
+    public void addComponent(Component component) {
+        this.components.add(component);
     }
 
-    public List<Material> getMaterials() { return new ArrayList<>(materials.keySet()); }
-    public void addMaterial(Material material, double quantity) { 
-        if (this.materials == null) {
-            this.materials = new HashMap<>();
-        }
-        this.materials.put(material, quantity); 
+    public void calculateTotalCost() {
+        double totalCost = components.stream()
+                .mapToDouble(Component::calculateCost)
+                .sum();
+        this.totalCost = totalCost * (1 + profitMargin / 100);
     }
 
-    public Map<Material, Double> getMaterialsWithQuantities() { return new HashMap<>(materials); }
+    public List<Material> getMaterials() {
+        return materials;
+    }
+
+    public List<Labor> getLaborItems() {
+        return laborItems;
+    }
 
     public void addMaterial(Material material) {
-        if (this.materials == null) {
-            this.materials = new ArrayList<>();
-        }
         this.materials.add(material);
+        this.components.add(material);
+    }
+
+    public void addLabor(Labor labor) {
+        this.laborItems.add(labor);
+        this.components.add(labor);
     }
 
     @Override
     public String toString() {
-        return "Project{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", surface=" + surface +
-                ", startDate=" + startDate +
-                ", status=" + status +
-                ", client=" + (client != null ? client.getName() : "Not assigned") +
-                ", materials=" + materials.size() +
-                ", laborItems=" + laborItems.size() +
-                '}';
+        return String.format("Project: %s, Client: %s, Surface: %.2f m², Total Cost: %.2f €, Status: %s",
+                projectName, client.getName(), surface, totalCost, projectStatus);
     }
 }

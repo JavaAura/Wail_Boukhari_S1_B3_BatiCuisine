@@ -18,18 +18,21 @@ public class CostCalculator {
     }
 
     public double calculateTotalCost(Project project) {
-        double materialCost = calculateMaterialCost(project);
-        double laborCost = calculateLaborCost(project);
-        double subtotal = materialCost + laborCost;
-        
-        // Apply client discount if client exists
-        double discountRate = (project.getClient() != null) ? project.getClient().getDiscountRate() : 0.0;
-        double discountedSubtotal = subtotal * (1 - discountRate);
-        
-        // Apply TVA
-        double totalWithTVA = discountedSubtotal * (1 + DEFAULT_TVA_RATE);
-        
-        return totalWithTVA;
+        try {
+            double materialCost = calculateMaterialCost(project);
+            double laborCost = calculateLaborCost(project);
+            double subtotal = materialCost + laborCost;
+            
+            double discountRate = (project.getClient() != null) ? project.getClient().getDiscountRate() : 0.0;
+            double discountedSubtotal = subtotal * (1 - discountRate);
+            
+            double totalWithTVA = discountedSubtotal * (1 + DEFAULT_TVA_RATE);
+            
+            return totalWithTVA;
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error calculating total cost for project: " + project.getProjectName(), e);
+            throw new RuntimeException("Failed to calculate total cost", e);
+        }
     }
 
     private double calculateMaterialCost(Project project) {
@@ -47,26 +50,26 @@ public class CostCalculator {
             double totalCost = calculateTotalCost(project);
             double surface = project.getSurface();
             if (surface <= 0) {
-                LOGGER.warning("Invalid surface area for project: " + project.getName());
+                LOGGER.warning("Invalid surface area for project: " + project.getProjectName());
                 return 0;
             }
             return totalCost / surface;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error calculating cost per square meter for project: " + project.getName(), e);
+            LOGGER.log(Level.SEVERE, "Error calculating cost per square meter for project: " + project.getProjectName(), e);
             throw new RuntimeException("Failed to calculate cost per square meter", e);
         }
     }
 
     public Map<String, Double> calculateCostBreakdown(Project project) {
         try {
-            double materialCost = calculateMaterialCost(project);
-            double laborCost = calculateLaborCost(project);
             Map<String, Double> breakdown = new HashMap<>();
-            breakdown.put("Material", materialCost);
-            breakdown.put("Labor", laborCost);
+            breakdown.put("Material Cost", calculateMaterialCost(project));
+            breakdown.put("Labor Cost", calculateLaborCost(project));
+            breakdown.put("Total Cost", calculateTotalCost(project));
+            breakdown.put("Cost Per Square Meter", calculateCostPerSquareMeter(project));
             return breakdown;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error calculating cost breakdown for project: " + project.getName(), e);
+            LOGGER.log(Level.SEVERE, "Error calculating cost breakdown for project: " + project.getProjectName(), e);
             throw new RuntimeException("Failed to calculate cost breakdown", e);
         }
     }

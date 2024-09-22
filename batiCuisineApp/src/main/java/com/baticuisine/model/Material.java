@@ -1,35 +1,38 @@
 package com.baticuisine.model;
 
 public class Material extends Component {
-    private static final double DEFAULT_TVA = 20.0;
-    private double coutUnitaire;
-    private double quantite;
-    private double coutTransport;
-    private double coefficientQualite;
+    private double unitCost;
+    private double quantity;
+    private double transportCost;
+    private double qualityCoefficient;
 
-    public Material(String name, double coutUnitaire, double quantite, double coutTransport, double coefficientQualite) {
-        super(name, "Matériel", DEFAULT_TVA);
-        this.coutUnitaire = coutUnitaire;
-        this.quantite = quantite;
-        this.coutTransport = coutTransport;
-        this.coefficientQualite = coefficientQualite;
+    public Material(String name, double vatRate, double unitCost, double quantity, 
+                    double transportCost, double qualityCoefficient) {
+        super(name, "Material", vatRate);
+        this.unitCost = unitCost;
+        this.quantity = quantity;
+        this.transportCost = transportCost;
+        this.qualityCoefficient = qualityCoefficient;
     }
 
     // Getters and setters
-    public double getCoutUnitaire() { return coutUnitaire; }
-    public void setCoutUnitaire(double coutUnitaire) { this.coutUnitaire = coutUnitaire; }
-
-    public double getQuantite() { return quantite; }
-    public void setQuantite(double quantite) { this.quantite = quantite; }
-
-    public double getCoutTransport() { return coutTransport; }
-    public void setCoutTransport(double coutTransport) { this.coutTransport = coutTransport; }
-
-    public double getCoefficientQualite() { return coefficientQualite; }
-    public void setCoefficientQualite(double coefficientQualite) { this.coefficientQualite = coefficientQualite; }
+    public double getUnitCost() { return unitCost; }
+    public void setUnitCost(double unitCost) { this.unitCost = unitCost; }
+    public double getQuantity() { return quantity; }
+    public void setQuantity(double quantity) { this.quantity = quantity; }
+    public double getTransportCost() { return transportCost; }
+    public void setTransportCost(double transportCost) { this.transportCost = transportCost; }
+    public double getQualityCoefficient() { return qualityCoefficient; }
+    public void setQualityCoefficient(double qualityCoefficient) { this.qualityCoefficient = qualityCoefficient; }
 
     @Override
     public double calculateCost() {
-        return (coutUnitaire * quantite + coutTransport) * coefficientQualite * (1 + DEFAULT_TVA / 100);
+        return (unitCost * quantity * qualityCoefficient) + transportCost;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s: %.2f € (quantity: %.2f, unit cost: %.2f €, quality: %.2f, transport: %.2f €)",
+                getName(), calculateCost(), quantity, unitCost, qualityCoefficient, transportCost);
     }
 }

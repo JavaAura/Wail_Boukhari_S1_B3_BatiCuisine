@@ -1,31 +1,27 @@
 package com.baticuisine.model;
 
-import java.util.UUID;
-
 public abstract class Component {
-    protected UUID id;
-    protected String name;
-    protected String typeComposant;
-    protected double tauxTVA;
+    private Long id;
+    private String name;
+    private String componentType;
+    private double vatRate;
 
-    public Component(String name, String typeComposant, double tauxTVA) {
-        this.id = UUID.randomUUID();
+    public Component(String name, String componentType, double vatRate) {
         this.name = name;
-        this.typeComposant = typeComposant;
-        this.tauxTVA = tauxTVA;
+        this.componentType = componentType;
+        this.vatRate = vatRate;
     }
 
     // Getters and setters
-    public UUID getId() { return id; }
-
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getComponentType() { return componentType; }
+    public void setComponentType(String componentType) { this.componentType = componentType; }
+    public double getVatRate() { return vatRate; }
+    public void setVatRate(double vatRate) { this.vatRate = vatRate; }
 
-    public String getTypeComposant() { return typeComposant; }
-    public void setTypeComposant(String typeComposant) { this.typeComposant = typeComposant; }
-
-    public double getTauxTVA() { return tauxTVA; }
-    public void setTauxTVA(double tauxTVA) { this.tauxTVA = tauxTVA; }
-
+    // Abstract method to calculate cost
     public abstract double calculateCost();
 }

@@ -17,13 +17,14 @@ public class ClientService {
         this.clientRepository = clientRepository;
     }
 
-    public void createClient(Client client) {
+    public Optional<Client> createClient(Client client) {
         try {
-            clientRepository.save(client);
+            Client savedClient = clientRepository.save(client);
             LOGGER.info("Client created: " + client.getName());
+            return Optional.of(savedClient);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating client", e);
-            throw new RuntimeException("Failed to create client", e);
+            return Optional.empty();
         }
     }
 
@@ -38,30 +39,39 @@ public class ClientService {
 
     public Optional<Client> getClientByName(String name) {
         try {
-            return clientRepository.findByName(name);
+            List<Client> clients = clientRepository.findByName(name);
+            return clients.stream().findFirst();
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error retrieving client by name", e);
-            throw new RuntimeException("Failed to retrieve client", e);
+            return Optional.empty();
         }
     }
 
-    public void updateClient(Client client) {
+    public Optional<Client> updateClient(Client client) {
         try {
             clientRepository.update(client);
             LOGGER.info("Client updated: " + client.getName());
+            return Optional.of(client);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating client", e);
-            throw new RuntimeException("Failed to update client", e);
+            return Optional.empty();
         }
     }
 
-    public void deleteClient(String clientName) {
+    public Optional<Client> deleteClient(String clientName) {
         try {
-            clientRepository.delete(clientName);
-            LOGGER.info("Client deleted: " + clientName);
+            Optional<Client> clientToDelete = getClientByName(clientName);
+            if (clientToDelete.isPresent()) {
+                clientRepository.delete(clientToDelete.get().getId());
+                LOGGER.info("Client deleted: " + clientName);
+                return clientToDelete;
+            } else {
+                LOGGER.warning("Client not found for deletion: " + clientName);
+                return Optional.empty();
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error deleting client", e);
-            throw new RuntimeException("Failed to delete client", e);
+            return Optional.empty();
         }
     }
 

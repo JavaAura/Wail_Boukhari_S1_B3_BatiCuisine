@@ -1,31 +1,35 @@
 package com.baticuisine.model;
-
-import java.util.UUID;
-
 public class Labor extends Component {
-    private double tauxHoraire;
-    private double heuresTravail;
-    private double productiviteOuvrier;
+    private double hourlyRate;
+    private double hoursWorked;
+    private double workerProductivity;
 
-    public Labor(String name, double tauxTVA, double tauxHoraire, double heuresTravail, double productiviteOuvrier) {
-        super(name, "Main-d'œuvre", tauxTVA);
-        this.tauxHoraire = tauxHoraire;
-        this.heuresTravail = heuresTravail;
-        this.productiviteOuvrier = productiviteOuvrier;
+    public Labor(String name, double vatRate, double hourlyRate, double hoursWorked, 
+                 double workerProductivity) {
+        super(name, "Labor", vatRate);
+        this.hourlyRate = hourlyRate;
+        this.hoursWorked = hoursWorked;
+        this.workerProductivity = workerProductivity;
     }
 
     // Getters and setters
-    public double getTauxHoraire() { return tauxHoraire; }
-    public void setTauxHoraire(double tauxHoraire) { this.tauxHoraire = tauxHoraire; }
+    public double getHourlyRate() { return hourlyRate; }
+    public void setHourlyRate(double hourlyRate) { this.hourlyRate = hourlyRate; }
 
-    public double getHeuresTravail() { return heuresTravail; }
-    public void setHeuresTravail(double heuresTravail) { this.heuresTravail = heuresTravail; }
+    public double getHoursWorked() { return hoursWorked; }
+    public void setHoursWorked(double hoursWorked) { this.hoursWorked = hoursWorked; }
 
-    public double getProductiviteOuvrier() { return productiviteOuvrier; }
-    public void setProductiviteOuvrier(double productiviteOuvrier) { this.productiviteOuvrier = productiviteOuvrier; }
+    public double getWorkerProductivity() { return workerProductivity; }
+    public void setWorkerProductivity(double workerProductivity) { this.workerProductivity = workerProductivity; }
 
     @Override
     public double calculateCost() {
-        return tauxHoraire * heuresTravail * productiviteOuvrier * (1 + tauxTVA / 100);
+        return hourlyRate * hoursWorked * workerProductivity;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s: %.2f € (hourly rate: %.2f €/h, hours worked: %.2f h, productivity: %.2f)",
+                getName(), calculateCost(), hourlyRate, hoursWorked, workerProductivity);
     }
 }
