@@ -4,12 +4,21 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 
-import com.baticuisine.model.*;
+import com.baticuisine.model.Client;
+import com.baticuisine.model.Labor;
+import com.baticuisine.model.Material;
+import com.baticuisine.model.Project;
+import com.baticuisine.model.Quote;
 import com.baticuisine.model.enums.ProjectStatus;
-import com.baticuisine.service.*;
+import com.baticuisine.service.ClientService;
+import com.baticuisine.service.CostCalculator;
+import com.baticuisine.service.MaterialService;
+import com.baticuisine.service.ProjectService;
+import com.baticuisine.service.QuoteGenerator;
 import com.baticuisine.utils.InputValidator;
 
 public class ProjectUI {
@@ -35,52 +44,62 @@ public class ProjectUI {
     }
 
     public void manageProjects() {
-        boolean running = true;
-        while (running) {
-            System.out.println("\n=== Project Management ===");
-            System.out.println("1. Create a new project");
-            System.out.println("2. View and manage existing projects");
-            System.out.println("3. Delete a project");
-            System.out.println("4. Manage quotes");
-            System.out.println("5. Return to main menu");
-
+        while (true) {
+            displayMainMenu();
             int choice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
-
-            switch (choice) {
-                case 1:
-                    createNewProject();
-                    break;
-                case 2:
-                    viewAndManageProjects();
-                    break;
-                case 3:
-                    deleteProject();
-                    break;
-                case 4:
-                    manageQuotes();
-                    break;
-                case 5:
-                    running = false;
-                    break;
-                default:
-                    System.out.println("Invalid option. Please try again.");
+            if (!handleMainMenuChoice(choice)) {
+                break;
             }
+        }
+    }
+public Optional<Project> getProjectByName(String projectName) {
+    try {
+        return projectService.findByName(projectName);
+    } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
+        throw new RuntimeException("Failed to retrieve project by name", e);
+    }
+}
+    private void displayMainMenu() {
+        System.out.println("\n=== Project Management ===");
+        System.out.println("1. Create a new project");
+        System.out.println("2. View and manage existing projects");
+        System.out.println("3. Delete a project");
+        System.out.println("4. Manage quotes");
+        System.out.println("5. Return to main menu");
+    }
+
+    private boolean handleMainMenuChoice(int choice) {
+        switch (choice) {
+            case 1: createNewProject(); return true;
+            case 2: viewAndManageProjects(); return true;
+            case 3: deleteProject(); return true;
+            case 4: manageQuotes(); return true;
+            case 5: return false;
+            default:
+                System.out.println("Invalid option. Please try again.");
+                return true;
         }
     }
 
     private void createNewProject() {
         System.out.println("\n=== Create a New Project ===");
+        Project project = createProjectFromInput();
+        addComponentsToProject(project);
+        saveProject(project);
+    }
+
+    private Project createProjectFromInput() {
         String projectName = inputValidator.getValidStringInput(scanner, "Project name: ");
         double surface = inputValidator.getValidDoubleInput(scanner, "Surface area (m²): ");
         LocalDate startDate = inputValidator.getValidDateInput(scanner, "Start date (YYYY-MM-DD): ");
         ProjectStatus status = getValidProjectStatus();
-
         Client client = getOrCreateClient();
+        return new Project(projectName, surface, startDate, status, client);
+    }
 
-        Project project = new Project(projectName, surface, startDate, status, client);
-
-        boolean addingComponents = true;
-        while (addingComponents) {
+    private void addComponentsToProject(Project project) {
+        while (true) {
             System.out.println("\nAdd components to the project:");
             System.out.println("1. Add material");
             System.out.println("2. Add labor");
@@ -89,23 +108,19 @@ public class ProjectUI {
             int componentChoice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
 
             switch (componentChoice) {
-                case 1:
-                    addMaterialToProject(project);
-                    break;
-                case 2:
-                    addLaborToProject(project);
-                    break;
-                case 3:
-                    addingComponents = false;
-                    break;
-                default:
-                    System.out.println("Invalid option. Please try again.");
+                case 1: addMaterialToProject(project); break;
+                case 2: addLaborToProject(project); break;
+                case 3: return;
+                default: System.out.println("Invalid option. Please try again.");
             }
         }
+    }
 
+    private void saveProject(Project project) {
         Optional<Project> createdProject = projectService.createProject(project);
-        createdProject.ifPresent(p -> System.out.println("Project created successfully: " + p));
-        if (!createdProject.isPresent()) {
+        if (createdProject.isPresent()) {
+            System.out.println("Project created successfully: " + createdProject.get());
+        } else {
             System.out.println("Failed to create project.");
         }
     }
@@ -113,41 +128,52 @@ public class ProjectUI {
     private Client getOrCreateClient() {
         System.out.println("\n=== Client Information ===");
         String clientName = inputValidator.getValidStringInput(scanner, "Client name: ");
-        Optional<Client> existingClient = clientService.getClientByName(clientName);
-        return existingClient.orElseGet(() -> {
-            System.out.println("Client not found. Let's create a new client.");
-            String email = inputValidator.getValidEmailInput(scanner, "Client email: ");
-            String address = inputValidator.getValidStringInput(scanner, "Client address: ");
-            String phone = inputValidator.getValidPhoneInput(scanner, "Client phone number: ");
-            boolean isProfessional = inputValidator.getValidBooleanInput(scanner, "Is the client professional? (yes/no): ");
-            double discountRate = inputValidator.getValidDoubleInput(scanner, "Client discount rate (0-1): ");
-            Client newClient = new Client(clientName, email, address, phone, isProfessional, discountRate);
-            clientService.createClient(newClient);
-            System.out.println("New client created successfully!");
-            return newClient;
-        });
+        return clientService.getClientByName(clientName).orElseGet(this::createNewClient);
+    }
+
+    private Client createNewClient() {
+        System.out.println("Client not found. Let's create a new client.");
+        String name = inputValidator.getValidStringInput(scanner, "Client name: ");
+        String email = inputValidator.getValidEmailInput(scanner, "Client email: ");
+        String address = inputValidator.getValidStringInput(scanner, "Client address: ");
+        String phone = inputValidator.getValidPhoneInput(scanner, "Client phone number: ");
+        boolean isProfessional = inputValidator.getValidBooleanInput(scanner, "Is the client professional? (yes/no): ");
+        double discountRate = inputValidator.getValidDoubleInput(scanner, "Client discount rate (0-1): ");
+        Client newClient = new Client(name, email, address, phone, isProfessional, discountRate);
+        clientService.createClient(newClient);
+        System.out.println("New client created successfully!");
+        return newClient;
     }
 
     private void addMaterialToProject(Project project) {
-        String materialName = inputValidator.getValidStringInput(scanner, "Material name: ");
-        double quantity = inputValidator.getValidDoubleInput(scanner, "Quantity: ");
-        String componentType = inputValidator.getValidStringInput(scanner, "Component type: ");
-        double unitCost = inputValidator.getValidDoubleInput(scanner, "Unit cost: ");
-
-        Material material = new Material(materialName, quantity, componentType, unitCost);
+        Material material = createMaterialFromInput();
         project.addMaterial(material);
         System.out.println("Material added to the project.");
     }
 
+    private Material createMaterialFromInput() {
+        String name = inputValidator.getValidStringInput(scanner, "Material name: ");
+        double vatRate = inputValidator.getValidDoubleInput(scanner, "VAT rate: ");
+        double unitCost = inputValidator.getValidDoubleInput(scanner, "Unit cost: ");
+        double quantity = inputValidator.getValidDoubleInput(scanner, "Quantity: ");
+        double transportCost = inputValidator.getValidDoubleInput(scanner, "Transport cost: ");
+        double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Quality coefficient: ");
+        return new Material(name, vatRate, unitCost, quantity, transportCost, qualityCoefficient);
+    }
+
     private void addLaborToProject(Project project) {
-        String laborName = inputValidator.getValidStringInput(scanner, "Labor name: ");
+        Labor labor = createLaborFromInput();
+        project.addLabor(labor);
+        System.out.println("Labor added to the project.");
+    }
+
+    private Labor createLaborFromInput() {
+        String name = inputValidator.getValidStringInput(scanner, "Labor name: ");
         double hoursWorked = inputValidator.getValidDoubleInput(scanner, "Hours worked: ");
         double hourlyRate = inputValidator.getValidDoubleInput(scanner, "Hourly rate: ");
         double workerProductivity = inputValidator.getValidDoubleInput(scanner, "Worker productivity (0-1): ");
-
-        Labor labor = new Labor(laborName, hoursWorked, hourlyRate, workerProductivity);
-        project.addLabor(labor);
-        System.out.println("Labor added to the project.");
+        double vatRate = inputValidator.getValidDoubleInput(scanner, "VAT rate: ");
+        return new Labor(name, hoursWorked, hourlyRate, workerProductivity, vatRate);
     }
 
     private void viewAndManageProjects() {
@@ -157,58 +183,57 @@ public class ProjectUI {
             return;
         }
 
+        displayProjects(projects);
+        int projectIndex = selectProject(projects);
+        if (projectIndex >= 0) {
+            manageProject(projects.get(projectIndex));
+        }
+    }
+
+    private void displayProjects(List<Project> projects) {
         System.out.println("\n=== Existing Projects ===");
         IntStream.range(0, projects.size())
-                .forEach(i -> System.out.println((i + 1) + ". " + projects.get(i).getName()));
+                .forEach(i -> System.out.println((i + 1) + ". " + projects.get(i).getProjectName()));
+    }
 
+    private int selectProject(List<Project> projects) {
         int projectIndex = inputValidator.getValidIntInput(scanner, "Select a project to manage (0 to cancel): ") - 1;
-        if (projectIndex == -1 || projectIndex >= projects.size()) {
-            return;
-        }
-
-        Project selectedProject = projects.get(projectIndex);
-        manageProject(selectedProject);
+        return (projectIndex >= -1 && projectIndex < projects.size()) ? projectIndex : -1;
     }
 
     private void manageProject(Project project) {
-        boolean managing = true;
-        while (managing) {
-            System.out.println("\n=== Managing Project: " + project.getName() + " ===");
-            System.out.println("1. View project details");
-            System.out.println("2. Update project status");
-            System.out.println("3. Add material");
-            System.out.println("4. Add labor");
-            System.out.println("5. Calculate total cost");
-            System.out.println("6. Generate quote");
-            System.out.println("7. Return to project list");
-
+        while (true) {
+            displayProjectMenu(project);
             int choice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
-
-            switch (choice) {
-                case 1:
-                    viewProjectDetails(project);
-                    break;
-                case 2:
-                    updateProjectStatus(project);
-                    break;
-                case 3:
-                    addMaterialToProject(project);
-                    break;
-                case 4:
-                    addLaborToProject(project);
-                    break;
-                case 5:
-                    calculateAndDisplayTotalCost(project);
-                    break;
-                case 6:
-                    generateAndDisplayQuote(project);
-                    break;
-                case 7:
-                    managing = false;
-                    break;
-                default:
-                    System.out.println("Invalid option. Please try again.");
+            if (!handleProjectMenuChoice(choice, project)) {
+                break;
             }
+        }
+    }
+
+    private void displayProjectMenu(Project project) {
+        System.out.println("\n=== Managing Project: " + project.getProjectName() + " ===");
+        System.out.println("1. View project details");
+        System.out.println("2. Update project status");
+        System.out.println("3. Add material");
+        System.out.println("4. Add labor");
+        System.out.println("5. Calculate total cost");
+        System.out.println("6. Generate quote");
+        System.out.println("7. Return to project list");
+    }
+
+    private boolean handleProjectMenuChoice(int choice, Project project) {
+        switch (choice) {
+            case 1: viewProjectDetails(project); return true;
+            case 2: updateProjectStatus(project); return true;
+            case 3: addMaterialToProject(project); return true;
+            case 4: addLaborToProject(project); return true;
+            case 5: calculateAndDisplayTotalCost(project); return true;
+            case 6: generateAndDisplayQuote(project); return true;
+            case 7: return false;
+            default:
+                System.out.println("Invalid option. Please try again.");
+                return true;
         }
     }
 
@@ -224,17 +249,18 @@ public class ProjectUI {
     private void updateProjectStatus(Project project) {
         System.out.println("\n=== Update Project Status ===");
         ProjectStatus newStatus = getValidProjectStatus();
-        project.setStatus(newStatus);
-        Optional<Project> updatedProject = projectService.updateProject(project);
-        updatedProject.ifPresent(p -> System.out.println("Project status updated successfully: " + p.getStatus()));
-        if (!updatedProject.isPresent()) {
+        project.setProjectStatus(newStatus);
+        Project updatedProject = projectService.updateProject(project);
+        if (updatedProject != null) {
+            System.out.println("Project status updated successfully: " + updatedProject.getProjectStatus());
+        } else {
             System.out.println("Failed to update project status.");
         }
     }
 
     private void calculateAndDisplayTotalCost(Project project) {
         double totalCost = costCalculator.calculateTotalCost(project);
-        System.out.println("Total cost for project " + project.getName() + ": " + String.format("%.2f", totalCost) + " €");
+        System.out.println("Total cost for project " + project.getProjectName() + ": " + String.format("%.2f", totalCost) + " €");
     }
 
     private void generateAndDisplayQuote(Project project) {
@@ -244,34 +270,38 @@ public class ProjectUI {
         System.out.println("\nDetailed quote content:");
         System.out.println(quote.getContent());
         
-        boolean saveQuote = inputValidator.getValidBooleanInput(scanner, "Do you want to save this quote? (yes/no): ");
-        if (saveQuote) {
-            Optional<Quote> savedQuote = quoteGenerator.saveQuote(quote);
-            savedQuote.ifPresent(q -> System.out.println("Quote saved successfully: " + q));
-            if (!savedQuote.isPresent()) {
-                System.out.println("Failed to save quote.");
-            }
+        if (inputValidator.getValidBooleanInput(scanner, "Do you want to save this quote? (yes/no): ")) {
+            saveQuote(quote);
         }
     }
 
+    private void saveQuote(Quote quote) {
+        Optional<Quote> savedQuoteOpt = quoteGenerator.saveQuote(quote);
+        if (savedQuoteOpt.isPresent()) {
+            System.out.println("Quote saved successfully: " + savedQuoteOpt.get());
+        } else {
+            System.out.println("Failed to save quote.");
+        }
+    }
+    
     private void deleteProject() {
         String projectName = inputValidator.getValidStringInput(scanner, "Enter the name of the project to delete: ");
         Optional<Project> projectToDelete = projectService.getProjectByName(projectName);
-        projectToDelete.ifPresent(this::confirmAndDeleteProject);
-        if (!projectToDelete.isPresent()) {
+        if (projectToDelete.isPresent()) {
+            confirmAndDeleteProject(projectToDelete.get());
+        } else {
             System.out.println("Project not found.");
         }
     }
-
+    
     private void confirmAndDeleteProject(Project project) {
-        System.out.println("Are you sure you want to delete this project? " + project.getName());
-        boolean confirm = inputValidator.getValidBooleanInput(scanner, "Confirm deletion (yes/no): ");
-        
-        if (confirm) {
-            Optional<Project> deletedProject = projectService.deleteProject(project.getId());
-            deletedProject.ifPresent(p -> System.out.println("Project deleted successfully: " + p.getName()));
-            if (!deletedProject.isPresent()) {
-                System.out.println("Failed to delete project.");
+        System.out.println("Are you sure you want to delete this project? " + project.getProjectName());
+        if (inputValidator.getValidBooleanInput(scanner, "Confirm deletion (yes/no): ")) {
+            try {
+                projectService.deleteProject(project.getId());
+                System.out.println("Project deleted successfully: " + project.getProjectName());
+            } catch (RuntimeException e) {
+                System.out.println("Failed to delete project: " + e.getMessage());
             }
         } else {
             System.out.println("Deletion cancelled.");
@@ -297,30 +327,24 @@ public class ProjectUI {
         int choice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
 
         switch (choice) {
-            case 1:
-                generateNewQuote();
-                break;
-            case 2:
-                viewExistingQuotes();
-                break;
-            case 0:
-                break;
-            default:
-                System.out.println("Invalid option.");
+            case 1: generateNewQuote(); break;
+            case 2: viewExistingQuotes(); break;
+            case 0: break;
+            default: System.out.println("Invalid option.");
         }
     }
 
     private void generateNewQuote() {
         String projectName = inputValidator.getValidStringInput(scanner, "Enter the name of the project to generate a quote for: ");
-        Optional<Project> projectForQuote = projectService.getProjectByName(projectName);
-        projectForQuote.ifPresent(this::generateAndDisplayQuote);
-        if (!projectForQuote.isPresent()) {
+        Optional<Project> projectOpt = projectService.getProjectByName(projectName);
+        if (projectOpt.isPresent()) {
+            generateAndDisplayQuote(projectOpt.get());
+        } else {
             System.out.println("Project not found.");
         }
     }
 
     private void viewExistingQuotes() {
-        // This method would need to be implemented if we want to view existing quotes
         System.out.println("Viewing existing quotes is not implemented yet.");
     }
 }

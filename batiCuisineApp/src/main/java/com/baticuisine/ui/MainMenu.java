@@ -36,8 +36,12 @@ public class MainMenu {
         System.out.println("\n=== Menu Principal ===");
         Arrays.stream(MenuOption.values())
                 .forEach(option -> System.out.println((option.ordinal() + 1) + ". " + option.getDescription()));
-
-        int choice = inputValidator.getValidIntInput(scanner, "Choisissez une option : ", 1, MenuOption.values().length);
+    
+        int choice;
+        do {
+            choice = inputValidator.getValidIntInput(scanner, "Choisissez une option : ");
+        } while (choice < 1 || choice > MenuOption.values().length);
+    
         return MenuOption.values()[choice - 1];
     }
 

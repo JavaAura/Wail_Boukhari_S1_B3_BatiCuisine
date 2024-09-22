@@ -10,16 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.baticuisine.database.DatabaseConnection;
 import com.baticuisine.model.Quote;
 
 public class QuoteRepositoryImpl implements QuoteRepository {
     private final Connection connection;
 
-    public QuoteRepositoryImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
-    }
 
+    public QuoteRepositoryImpl(Connection connection) {
+        this.connection = connection;
+    }
     @Override
     public Quote save(Quote quote) {
         String sql = "INSERT INTO quotes (estimated_amount, issue_date, validity_date, accepted, project_id) VALUES (?, ?, ?, ?, ?)";

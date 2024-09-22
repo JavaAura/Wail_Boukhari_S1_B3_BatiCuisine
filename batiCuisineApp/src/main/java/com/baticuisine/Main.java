@@ -1,27 +1,14 @@
 package com.baticuisine;
 
 import java.sql.Connection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.baticuisine.database.DatabaseConnection;
-import com.baticuisine.repository.ClientRepository;
-import com.baticuisine.repository.MaterialRepository;
-import com.baticuisine.repository.ProjectRepository;
-import com.baticuisine.repository.QuoteRepository;
-import com.baticuisine.service.ClientService;
-import com.baticuisine.service.CostCalculator;
-import com.baticuisine.service.MaterialService;
-import com.baticuisine.service.ProjectService;
-import com.baticuisine.service.QuoteGenerator;
-import com.baticuisine.ui.ClientUI;
-import com.baticuisine.ui.MainMenu;
-import com.baticuisine.ui.MaterialUI;
-import com.baticuisine.ui.ProjectUI;
-import com.baticuisine.utils.DateUtils;
-import com.baticuisine.utils.InputValidator;
+import com.baticuisine.repository.*;
+import com.baticuisine.service.*;
+import com.baticuisine.ui.*;
+import com.baticuisine.utils.*;
 
 public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -30,34 +17,30 @@ public class Main {
         LOGGER.info("Starting Bati-Cuisine application");
 
         try {
-            DatabaseConnection dbConnection = DatabaseConnection.getInstance();
-            Connection connection = dbConnection.getConnection();
+            Connection connection = DatabaseConnection.getInstance().getConnection();
+            
+            // Initialize repositories
+            ProjectRepository projectRepository = new ProjectRepositoryImpl(connection);
+            ClientRepository clientRepository = new ClientRepositoryImpl(connection);
+            QuoteRepository quoteRepository = new QuoteRepositoryImpl(connection);
+            ComponentRepository componentRepository = new ComponentRepositoryImpl();
 
-            MaterialRepository materialRepository = new MaterialRepository(connection);
-            MaterialService materialService = new MaterialService(materialRepository);
-
-            Map<String, Object> repositories = new HashMap<>();
-            repositories.put("project", new ProjectRepository(connection));
-            repositories.put("client", new ClientRepository(connection));
-            repositories.put("material", materialRepository);
-            repositories.put("quote", new QuoteRepository(connection));
-
-            InputValidator inputValidator = new InputValidator();
+            // Initialize services
             DateUtils dateUtils = new DateUtils();
+            ProjectService projectService = new ProjectService(projectRepository, dateUtils, componentRepository);
+            ClientService clientService = new ClientService(clientRepository);
+            MaterialService materialService = new MaterialService(componentRepository);
+            CostCalculator costCalculator = new CostCalculator(materialService);
+            QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, quoteRepository);
 
-            Map<String, Object> services = new HashMap<>();
-            services.put("project", new ProjectService((ProjectRepository) repositories.get("project"), dateUtils, materialRepository));
-            services.put("client", new ClientService((ClientRepository) repositories.get("client")));
-            services.put("material", materialService);
-
-            CostCalculator costCalculator = new CostCalculator((MaterialService) services.get("material"));
-            QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, (QuoteRepository) repositories.get("quote"));
+            // Initialize UI components
+            InputValidator inputValidator = new InputValidator();
+            ProjectUI projectUI = new ProjectUI(projectService, costCalculator, inputValidator, quoteGenerator, materialService, clientService);
+            ClientUI clientUI = new ClientUI(clientService, inputValidator);
+            MaterialUI materialUI = new MaterialUI(materialService, inputValidator);
 
             MainMenu mainMenu = new MainMenu();
-            ProjectUI projectUI = new ProjectUI((ProjectService) services.get("project"), costCalculator, inputValidator, quoteGenerator, (MaterialService) services.get("material"), (ClientService) services.get("client"));
-            ClientUI clientUI = new ClientUI((ClientService) services.get("client"), inputValidator);
-            MaterialUI materialUI = new MaterialUI((MaterialService) services.get("material"), inputValidator);
-
+            
             runApplication(mainMenu, projectUI, clientUI, materialUI);
 
         } catch (Exception e) {

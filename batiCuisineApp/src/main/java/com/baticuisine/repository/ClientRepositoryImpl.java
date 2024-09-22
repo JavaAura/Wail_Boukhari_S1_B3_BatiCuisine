@@ -9,16 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.baticuisine.database.DatabaseConnection;
 import com.baticuisine.model.Client;
 
 public class ClientRepositoryImpl implements ClientRepository {
     private final Connection connection;
 
-    public ClientRepositoryImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+    public ClientRepositoryImpl(Connection connection) {
+        this.connection = connection;
     }
-
     @Override
     public Client save(Client client) {
         String sql = "INSERT INTO clients (name, address, phone_number, is_professional, discount_rate) VALUES (?, ?, ?, ?, ?)";

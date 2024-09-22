@@ -10,15 +10,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.baticuisine.database.DatabaseConnection;
 import com.baticuisine.model.Project;
 import com.baticuisine.model.enums.ProjectStatus;
 
 public class ProjectRepositoryImpl implements ProjectRepository {
     private final Connection connection;
 
-    public ProjectRepositoryImpl() {
-        this.connection = DatabaseConnection.getInstance().getConnection();
+    public ProjectRepositoryImpl(Connection connection) {
+        this.connection = connection;
     }
 
     @Override
@@ -49,7 +48,20 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
         return project;
     }
-
+    @Override
+    public Optional<Project> findByName(String name) {
+        String sql = "SELECT * FROM projects WHERE project_name = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, name);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return Optional.of(mapResultSetToProject(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding project by name", e);
+        }
+        return Optional.empty();
+    }
     @Override
     public Optional<Project> findById(Long id) {
         String sql = "SELECT * FROM projects WHERE id = ?";
@@ -108,7 +120,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     }
 
     @Override
-    public void update(Project project) {
+    public Project update(Project project) {
         String sql = "UPDATE projects SET project_name = ?, profit_margin = ?, total_cost = ?, project_status = ?, surface = ?, start_date = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, project.getProjectName());
@@ -118,7 +130,11 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             pstmt.setDouble(5, project.getSurface());
             pstmt.setDate(6, Date.valueOf(project.getStartDate()));
             pstmt.setLong(7, project.getId());
-            pstmt.executeUpdate();
+            int affectedRows = pstmt.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Updating project failed, no rows affected.");
+            }
+            return project;
         } catch (SQLException e) {
             throw new RuntimeException("Error updating project", e);
         }

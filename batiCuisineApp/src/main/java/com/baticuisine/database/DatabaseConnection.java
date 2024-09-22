@@ -15,7 +15,7 @@ public class DatabaseConnection {
     private static final String USER = PropertyLoader.getProperty("db.username");
     private static final String PASSWORD = PropertyLoader.getProperty("db.password");
 
-    private static DatabaseConnection instance;
+    private static volatile DatabaseConnection instance;
     private Connection connection;
 
     private DatabaseConnection() {
@@ -33,9 +33,13 @@ public class DatabaseConnection {
         }
     }
 
-    public static synchronized DatabaseConnection getInstance() {
+    public static DatabaseConnection getInstance() {
         if (instance == null) {
-            instance = new DatabaseConnection();
+            synchronized (DatabaseConnection.class) {
+                if (instance == null) {
+                    instance = new DatabaseConnection();
+                }
+            }
         }
         return instance;
     }
@@ -45,9 +49,8 @@ public class DatabaseConnection {
     }
 
     public void closeConnection() {
-        try {
-            if (this.connection != null && !this.connection.isClosed()) {
-                this.connection.close();
+        try (Connection conn = this.connection) {
+            if (conn != null && !conn.isClosed()) {
                 LOGGER.info("Database connection closed successfully.");
             }
         } catch (SQLException e) {

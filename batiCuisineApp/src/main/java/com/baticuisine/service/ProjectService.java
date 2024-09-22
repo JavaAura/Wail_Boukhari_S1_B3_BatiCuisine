@@ -10,16 +10,19 @@ import com.baticuisine.model.Project;
 import com.baticuisine.model.enums.ProjectStatus;
 import com.baticuisine.repository.ComponentRepository;
 import com.baticuisine.repository.ProjectRepository;
+import com.baticuisine.utils.DateUtils;
 
 public class ProjectService {
     private static final Logger LOGGER = Logger.getLogger(ProjectService.class.getName());
     private final ProjectRepository projectRepository;
     private final ComponentRepository componentRepository;
-
-    public ProjectService(ProjectRepository projectRepository, ComponentRepository componentRepository) {
-        this.projectRepository = projectRepository;
-        this.componentRepository = componentRepository;
-    }
+    private final DateUtils dateUtils;
+    
+ public ProjectService(ProjectRepository projectRepository, DateUtils dateUtils, ComponentRepository componentRepository) {
+    this.projectRepository = projectRepository;
+    this.dateUtils = dateUtils;
+    this.componentRepository = componentRepository;
+}
 
     public Optional<Project> createProject(Project project) {
         try {
@@ -40,7 +43,6 @@ public class ProjectService {
             throw new RuntimeException("Failed to retrieve project", e);
         }
     }
-
     public List<Project> getAllProjects() {
         try {
             return projectRepository.findAll();
@@ -58,17 +60,32 @@ public class ProjectService {
             throw new RuntimeException("Failed to retrieve projects by status", e);
         }
     }
-
-    public void updateProject(Project project) {
+    public Optional<Project> getProjectByName(String projectName) {
+        try {
+            return projectRepository.findByName(projectName);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
+            throw new RuntimeException("Failed to retrieve project by name", e);
+        }
+    }
+    public Project updateProject(Project project) {
         try {
             projectRepository.update(project);
             LOGGER.info("Project updated: " + project.getProjectName());
+            return project;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error updating project", e);
             throw new RuntimeException("Failed to update project", e);
         }
     }
-
+    public Optional<Project> findByName(String projectName) {
+        try {
+            return projectRepository.findByName(projectName);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
+            throw new RuntimeException("Failed to retrieve project by name", e);
+        }
+    }
     public void deleteProject(Long id) {
         try {
             projectRepository.delete(id);
