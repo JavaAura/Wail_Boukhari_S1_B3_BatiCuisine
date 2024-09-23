@@ -50,4 +50,12 @@ public class Quote {
                 project.getProjectName(), estimatedAmount, issueDate, validityDate, 
                 accepted ? "Accepted" : (isValid() ? "Pending" : "Expired"));
     }
+
+    public double getTotalCost() {
+        return estimatedAmount;
+    }
+
+    public void setTotalCost(double totalCost) {
+        this.estimatedAmount = totalCost;
+    }
 }

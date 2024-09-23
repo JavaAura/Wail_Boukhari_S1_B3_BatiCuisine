@@ -36,7 +36,14 @@ public class ClientService {
             throw new RuntimeException("Failed to retrieve clients", e);
         }
     }
-
+    public List<Client> getClientsByNameAndPhone(String name, String phone) {
+        try {
+            return clientRepository.findByNameAndPhone(name, phone);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving clients by name and phone: " + name + ", " + phone, e);
+            throw new RuntimeException("Failed to retrieve clients by name and phone", e);
+        }
+    }
     public Optional<Client> getClientByName(String name) {
         try {
             List<Client> clients = clientRepository.findByName(name);

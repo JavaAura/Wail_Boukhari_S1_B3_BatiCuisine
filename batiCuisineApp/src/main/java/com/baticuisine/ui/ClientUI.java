@@ -57,9 +57,13 @@ public class ClientUI {
         System.out.println("\n=== Add a New Client ===");
         Client newClient = createClientFromInput();
         Optional<Client> createdClient = clientService.createClient(newClient);
-        createdClient.ifPresent(c -> System.out.println("Client added successfully: " + c));
-        if (!createdClient.isPresent()) {
+        if (createdClient.isPresent()) {
+            Client c = createdClient.get();
+            System.out.println("Client added successfully: " + c);
+            LOGGER.info("Client added successfully: " + c);
+        } else {
             System.out.println("Failed to add client.");
+            LOGGER.warning("Failed to add client.");
         }
     }
 
@@ -78,8 +82,12 @@ public class ClientUI {
         List<Client> clients = clientService.getAllClients();
         if (clients.isEmpty()) {
             System.out.println("No clients found.");
+            LOGGER.info("No clients found.");
         } else {
-            clients.forEach(System.out::println);
+            clients.forEach(client -> {
+                System.out.println(client);
+                LOGGER.info("Client: " + client);
+            });
         }
     }
 
@@ -91,6 +99,7 @@ public class ClientUI {
             updateClientDetails(clientToUpdate.get());
         } else {
             System.out.println("Client not found.");
+            LOGGER.warning("Client not found: " + name);
         }
     }
 
@@ -98,9 +107,13 @@ public class ClientUI {
         System.out.println("Current client details: " + client);
         updateClientFields(client);
         Optional<Client> updatedClient = clientService.updateClient(client);
-        updatedClient.ifPresent(c -> System.out.println("Client updated successfully: " + c));
-        if (!updatedClient.isPresent()) {
+        if (updatedClient.isPresent()) {
+            Client c = updatedClient.get();
+            System.out.println("Client updated successfully: " + c);
+            LOGGER.info("Client updated successfully: " + c);
+        } else {
             System.out.println("Failed to update client.");
+            LOGGER.warning("Failed to update client: " + client);
         }
     }
 
@@ -128,6 +141,7 @@ public class ClientUI {
             confirmAndDeleteClient(clientToDelete.get());
         } else {
             System.out.println("Client not found.");
+            LOGGER.warning("Client not found: " + name);
         }
     }
 
@@ -137,12 +151,17 @@ public class ClientUI {
 
         if (confirm) {
             Optional<Client> deletedClient = clientService.deleteClient(client.getName());
-            deletedClient.ifPresent(c -> System.out.println("Client deleted successfully: " + c));
-            if (!deletedClient.isPresent()) {
+            if (deletedClient.isPresent()) {
+                Client c = deletedClient.get();
+                System.out.println("Client deleted successfully: " + c);
+                LOGGER.info("Client deleted successfully: " + c);
+            } else {
                 System.out.println("Failed to delete client.");
+                LOGGER.warning("Failed to delete client: " + client);
             }
         } else {
             System.out.println("Deletion cancelled.");
+            LOGGER.info("Deletion cancelled for client: " + client);
         }
     }
 }

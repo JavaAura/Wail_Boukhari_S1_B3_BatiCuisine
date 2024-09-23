@@ -19,13 +19,14 @@ public class ClientRepositoryImpl implements ClientRepository {
     }
     @Override
     public Client save(Client client) {
-        String sql = "INSERT INTO clients (name, address, phone_number, is_professional, discount_rate) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO clients (name, email, address, phone_number, is_professional, discount_rate) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, client.getName());
-            pstmt.setString(2, client.getAddress());
-            pstmt.setString(3, client.getPhoneNumber());
-            pstmt.setBoolean(4, client.isProfessional());
-            pstmt.setDouble(5, client.getDiscountRate());
+            pstmt.setString(2, client.getEmail());
+            pstmt.setString(3, client.getAddress());
+            pstmt.setString(4, client.getPhoneNumber());
+            pstmt.setBoolean(5, client.isProfessional());
+            pstmt.setDouble(6, client.getDiscountRate());
     
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
@@ -45,7 +46,22 @@ public class ClientRepositoryImpl implements ClientRepository {
         return client;
     }
 
-
+    @Override
+    public List<Client> findByNameAndPhone(String name, String phone) {
+        List<Client> clients = new ArrayList<>();
+        String sql = "SELECT * FROM clients WHERE name LIKE ? AND phone_number LIKE ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, "%" + name + "%");
+            pstmt.setString(2, "%" + phone + "%");
+            ResultSet rs = pstmt.executeQuery();
+            while (rs.next()) {
+                clients.add(mapResultSetToClient(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding clients by name and phone", e);
+        }
+        return clients;
+    }
     @Override
     public Optional<Client> findById(Long id) {
         String sql = "SELECT * FROM clients WHERE id = ?";
@@ -105,13 +121,15 @@ public class ClientRepositoryImpl implements ClientRepository {
 
     @Override
     public void update(Client client) {
-        String sql = "UPDATE clients SET name = ?, address = ?, phone_number = ?, is_professional = ? WHERE id = ?";
+        String sql = "UPDATE clients SET name = ?, email = ?, address = ?, phone_number = ?, is_professional = ?, discount_rate = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, client.getName());
-            pstmt.setString(2, client.getAddress());
-            pstmt.setString(3, client.getPhoneNumber());
-            pstmt.setBoolean(4, client.isProfessional());
-            pstmt.setLong(5, client.getId());
+            pstmt.setString(2, client.getEmail());
+            pstmt.setString(3, client.getAddress());
+            pstmt.setString(4, client.getPhoneNumber());
+            pstmt.setBoolean(5, client.isProfessional());
+            pstmt.setDouble(6, client.getDiscountRate());
+            pstmt.setLong(7, client.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error updating client", e);

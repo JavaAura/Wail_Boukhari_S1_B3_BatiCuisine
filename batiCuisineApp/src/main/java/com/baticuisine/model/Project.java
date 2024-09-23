@@ -17,8 +17,8 @@ public class Project {
     private double surface;
     private LocalDate startDate;
 
-    private List<Material> materials = new ArrayList<>();
-    private List<Labor> laborItems = new ArrayList<>();
+    private List<Material> materials;
+    private List<Labor> laborItems;
 
     public Project(String projectName, double surface, LocalDate startDate, ProjectStatus projectStatus, Client client) {
         this.projectName = projectName;
@@ -29,6 +29,8 @@ public class Project {
         this.components = new ArrayList<>();
         this.profitMargin = 0;
         this.totalCost = 0;
+        this.materials = new ArrayList<>();
+        this.laborItems = new ArrayList<>();
     }
 
     // Getters and setters
@@ -79,9 +81,18 @@ public class Project {
         this.components.add(labor);
     }
 
+    public void setMaterials(List<Material> materials) {
+        this.materials = materials;
+    }
+
+    public void setLaborItems(List<Labor> laborItems) {
+        this.laborItems = laborItems;
+    }
+
     @Override
     public String toString() {
+        String clientName = (client != null) ? client.getName() : "No client assigned";
         return String.format("Project: %s, Client: %s, Surface: %.2f m², Total Cost: %.2f €, Status: %s",
-                projectName, client.getName(), surface, totalCost, projectStatus);
+                projectName, clientName, surface, totalCost, projectStatus);
     }
 }

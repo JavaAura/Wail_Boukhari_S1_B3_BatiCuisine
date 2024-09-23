@@ -12,4 +12,5 @@ public interface ClientRepository {
     List<Client> findByName(String name);
     void delete(Long id);
     void update(Client client);
+    List<Client> findByNameAndPhone(String name, String phone);
 }

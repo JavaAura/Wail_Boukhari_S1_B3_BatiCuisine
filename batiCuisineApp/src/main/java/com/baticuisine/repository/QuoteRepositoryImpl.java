@@ -15,25 +15,25 @@ import com.baticuisine.model.Quote;
 public class QuoteRepositoryImpl implements QuoteRepository {
     private final Connection connection;
 
-
     public QuoteRepositoryImpl(Connection connection) {
         this.connection = connection;
     }
+
     @Override
     public Quote save(Quote quote) {
-        String sql = "INSERT INTO quotes (estimated_amount, issue_date, validity_date, accepted, project_id) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO quotes (total_cost, issue_date, validity_date, project_id, content) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setDouble(1, quote.getEstimatedAmount());
+            pstmt.setDouble(1, quote.getTotalCost());
             pstmt.setDate(2, Date.valueOf(quote.getIssueDate()));
             pstmt.setDate(3, Date.valueOf(quote.getValidityDate()));
-            pstmt.setBoolean(4, quote.isAccepted());
-            pstmt.setLong(5, quote.getProject().getId());
-
+            pstmt.setLong(4, quote.getProject().getId());
+            pstmt.setString(5, quote.getContent());
+    
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Creating quote failed, no rows affected.");
             }
-
+    
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     quote.setId(generatedKeys.getLong(1));
@@ -106,14 +106,13 @@ public class QuoteRepositoryImpl implements QuoteRepository {
 
     @Override
     public void update(Quote quote) {
-        String sql = "UPDATE quotes SET estimated_amount = ?, issue_date = ?, validity_date = ?, accepted = ?, project_id = ? WHERE id = ?";
+        String sql = "UPDATE quotes SET total_cost = ?, issue_date = ?, validity_date = ?, project_id = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setDouble(1, quote.getEstimatedAmount());
+            pstmt.setDouble(1, quote.getTotalCost());
             pstmt.setDate(2, Date.valueOf(quote.getIssueDate()));
             pstmt.setDate(3, Date.valueOf(quote.getValidityDate()));
-            pstmt.setBoolean(4, quote.isAccepted());
-            pstmt.setLong(5, quote.getProject().getId());
-            pstmt.setLong(6, quote.getId());
+            pstmt.setLong(4, quote.getProject().getId());
+            pstmt.setLong(5, quote.getId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error updating quote", e);

@@ -1,11 +1,13 @@
 package com.baticuisine.service;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import com.baticuisine.model.Component;
+import com.baticuisine.model.Labor;
+import com.baticuisine.model.Material;
 import com.baticuisine.model.Project;
 import com.baticuisine.model.enums.ProjectStatus;
 import com.baticuisine.repository.ComponentRepository;
@@ -17,32 +19,38 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ComponentRepository componentRepository;
     private final DateUtils dateUtils;
-    
- public ProjectService(ProjectRepository projectRepository, DateUtils dateUtils, ComponentRepository componentRepository) {
-    this.projectRepository = projectRepository;
-    this.dateUtils = dateUtils;
-    this.componentRepository = componentRepository;
-}
+    private final CostCalculator costCalculator;
+
+    public ProjectService(ProjectRepository projectRepository, DateUtils dateUtils, ComponentRepository componentRepository, CostCalculator costCalculator) {
+        this.projectRepository = projectRepository;
+        this.dateUtils = dateUtils;
+        this.componentRepository = componentRepository;
+        this.costCalculator = costCalculator;
+    }
 
     public Optional<Project> createProject(Project project) {
         try {
-            Project savedProject = projectRepository.save(project);
-            LOGGER.info("Project created: " + savedProject.getProjectName());
-            return Optional.of(savedProject);
+            if (project.getClient() == null || project.getClient().getId() == null) {
+                throw new IllegalArgumentException("Client must be set and have a valid ID before creating a project");
+            }
+            Project createdProject = projectRepository.save(project);
+            return Optional.of(createdProject);
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error creating project", e);
             return Optional.empty();
         }
     }
 
-    public Optional<Project> getProjectById(Long id) {
+    public Project updateProject(Project project) {
         try {
-            return projectRepository.findById(id);
+            projectRepository.update(project);
+            return project;
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving project by id: " + id, e);
-            throw new RuntimeException("Failed to retrieve project", e);
+            LOGGER.log(Level.SEVERE, "Error updating project", e);
+            throw new RuntimeException("Failed to update project", e);
         }
     }
+
     public List<Project> getAllProjects() {
         try {
             return projectRepository.findAll();
@@ -56,36 +64,38 @@ public class ProjectService {
         try {
             return projectRepository.findByStatus(status);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving projects by status: " + status, e);
-            throw new RuntimeException("Failed to retrieve projects by status", e);
+            LOGGER.log(Level.SEVERE, "Error retrieving projects by status", e);
+            throw new RuntimeException("Failed to retrieve projects", e);
         }
     }
-    public Optional<Project> getProjectByName(String projectName) {
+
+    public Project calculateTotalCost(Long projectId) {
         try {
-            return projectRepository.findByName(projectName);
+            Optional<Project> projectOpt = projectRepository.findById(projectId);
+            if (projectOpt.isPresent()) {
+                Project project = projectOpt.get();
+                double totalCost = costCalculator.calculateTotalCost(project);
+                project.setTotalCost(totalCost);
+                Project updatedProject = projectRepository.update(project);
+                LOGGER.info("Total cost calculated and saved for project: " + projectId);
+                return updatedProject;
+            } else {
+                throw new IllegalArgumentException("Project not found with id: " + projectId);
+            }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
+            LOGGER.log(Level.SEVERE, "Error calculating total cost for project: " + projectId, e);
+            throw new RuntimeException("Failed to calculate total cost", e);
+        }
+    }
+    public Optional<Project> getProjectByName(String name) {
+        try {
+            return projectRepository.findByName(name);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + name, e);
             throw new RuntimeException("Failed to retrieve project by name", e);
         }
     }
-    public Project updateProject(Project project) {
-        try {
-            projectRepository.update(project);
-            LOGGER.info("Project updated: " + project.getProjectName());
-            return project;
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error updating project", e);
-            throw new RuntimeException("Failed to update project", e);
-        }
-    }
-    public Optional<Project> findByName(String projectName) {
-        try {
-            return projectRepository.findByName(projectName);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
-            throw new RuntimeException("Failed to retrieve project by name", e);
-        }
-    }
+    
     public void deleteProject(Long id) {
         try {
             projectRepository.delete(id);
@@ -96,38 +106,11 @@ public class ProjectService {
         }
     }
 
-    public void addComponentToProject(Long projectId, Component component) {
-        try {
-            Optional<Project> projectOpt = projectRepository.findById(projectId);
-            if (projectOpt.isPresent()) {
-                Project project = projectOpt.get();
-                project.addComponent(component);
-                componentRepository.save(component);
-                projectRepository.update(project);
-                LOGGER.info("Component added to project: " + projectId);
-            } else {
-                throw new IllegalArgumentException("Project not found with id: " + projectId);
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error adding component to project: " + projectId, e);
-            throw new RuntimeException("Failed to add component to project", e);
-        }
+    public void saveMaterial(Material material, Long projectId) throws SQLException {
+        projectRepository.saveMaterial(material, projectId);
     }
 
-    public void calculateTotalCost(Long projectId) {
-        try {
-            Optional<Project> projectOpt = projectRepository.findById(projectId);
-            if (projectOpt.isPresent()) {
-                Project project = projectOpt.get();
-                project.calculateTotalCost();
-                projectRepository.update(project);
-                LOGGER.info("Total cost calculated for project: " + projectId);
-            } else {
-                throw new IllegalArgumentException("Project not found with id: " + projectId);
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error calculating total cost for project: " + projectId, e);
-            throw new RuntimeException("Failed to calculate total cost", e);
-        }
+    public void saveLabor(Labor labor, Long projectId) throws SQLException {
+        projectRepository.saveLabor(labor, projectId);
     }
 }

@@ -5,10 +5,25 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.baticuisine.database.DatabaseConnection;
-import com.baticuisine.repository.*;
-import com.baticuisine.service.*;
-import com.baticuisine.ui.*;
-import com.baticuisine.utils.*;
+import com.baticuisine.repository.ClientRepository;
+import com.baticuisine.repository.ClientRepositoryImpl;
+import com.baticuisine.repository.ComponentRepository;
+import com.baticuisine.repository.ComponentRepositoryImpl;
+import com.baticuisine.repository.ProjectRepository;
+import com.baticuisine.repository.ProjectRepositoryImpl;
+import com.baticuisine.repository.QuoteRepository;
+import com.baticuisine.repository.QuoteRepositoryImpl;
+import com.baticuisine.service.ClientService;
+import com.baticuisine.service.CostCalculator;
+import com.baticuisine.service.MaterialService;
+import com.baticuisine.service.ProjectService;
+import com.baticuisine.service.QuoteGenerator;
+import com.baticuisine.ui.ClientUI;
+import com.baticuisine.ui.MainMenu;
+import com.baticuisine.ui.MaterialUI;
+import com.baticuisine.ui.ProjectUI;
+import com.baticuisine.utils.DateUtils;
+import com.baticuisine.utils.InputValidator;
 
 public class Main {
     private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
@@ -16,9 +31,7 @@ public class Main {
     public static void main(String[] args) {
         LOGGER.info("Starting Bati-Cuisine application");
 
-        try {
-            Connection connection = DatabaseConnection.getInstance().getConnection();
-            
+        try (Connection connection = DatabaseConnection.getInstance().getConnection()) {
             // Initialize repositories
             ProjectRepository projectRepository = new ProjectRepositoryImpl(connection);
             ClientRepository clientRepository = new ClientRepositoryImpl(connection);
@@ -27,10 +40,10 @@ public class Main {
 
             // Initialize services
             DateUtils dateUtils = new DateUtils();
-            ProjectService projectService = new ProjectService(projectRepository, dateUtils, componentRepository);
-            ClientService clientService = new ClientService(clientRepository);
             MaterialService materialService = new MaterialService(componentRepository);
             CostCalculator costCalculator = new CostCalculator(materialService);
+            ProjectService projectService = new ProjectService(projectRepository, dateUtils, componentRepository, costCalculator);
+            ClientService clientService = new ClientService(clientRepository);
             QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, quoteRepository);
 
             // Initialize UI components

@@ -1,14 +1,38 @@
 -- Drop existing tables if they exist
 DROP TABLE IF EXISTS project_components;
+DROP TABLE IF EXISTS quotes;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS clients;
 DROP TABLE IF EXISTS labor;
 DROP TABLE IF EXISTS materials;
 DROP TABLE IF EXISTS components;
 
+-- Create Clients table
+CREATE TABLE clients (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(20) NOT NULL,
+    address TEXT NOT NULL,
+    is_professional BOOLEAN NOT NULL,
+    discount_rate DOUBLE PRECISION NOT NULL
+);
+
+-- Create Projects table
+CREATE TABLE projects (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    name VARCHAR(255) NOT NULL,
+    surface DECIMAL(10,2) NOT NULL,
+    start_date DATE NOT NULL,
+    status VARCHAR(50) NOT NULL,
+    profit_margin DECIMAL(5,2) NOT NULL,
+    total_cost DECIMAL(10,2) NOT NULL,
+    client_id BIGINT REFERENCES clients(id)
+);
+
 -- Create Components table
 CREATE TABLE components (
-    id UUID PRIMARY KEY,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     taux_tva DECIMAL(5,2) NOT NULL
@@ -16,8 +40,7 @@ CREATE TABLE components (
 
 -- Create Materials table (inherits from Components)
 CREATE TABLE materials (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    id BIGINT PRIMARY KEY REFERENCES components(id),
     cout_unitaire DECIMAL(10,2) NOT NULL,
     quantite DECIMAL(10,2) NOT NULL,
     cout_transport DECIMAL(10,2) NOT NULL,
@@ -26,81 +49,61 @@ CREATE TABLE materials (
 
 -- Create Labor table (inherits from Components)
 CREATE TABLE labor (
-    id UUID PRIMARY KEY REFERENCES components(id),
+    id BIGINT PRIMARY KEY REFERENCES components(id),
     taux_horaire DECIMAL(10,2) NOT NULL,
     heures_travail DECIMAL(10,2) NOT NULL,
     productivite_ouvrier DECIMAL(5,2) NOT NULL
 );
 
--- Create Clients table
-CREATE TABLE clients (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
-    address TEXT NOT NULL,
-    is_professional BOOLEAN NOT NULL
-);
-
--- Create Projects table
-CREATE TABLE projects (
-    id UUID PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    surface DECIMAL(10,2) NOT NULL,
-    start_date DATE NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    client_id UUID REFERENCES clients(id)
-);
-
 -- Create Project_Components junction table
 CREATE TABLE project_components (
-    project_id UUID REFERENCES projects(id),
-    component_id UUID REFERENCES components(id),
+    project_id BIGINT REFERENCES projects(id),
+    component_id BIGINT REFERENCES components(id),
     quantity DECIMAL(10,2) NOT NULL,
     PRIMARY KEY (project_id, component_id)
 );
+
 -- Create Quotes table
 CREATE TABLE quotes (
-    id UUID PRIMARY KEY,
-    project_id UUID REFERENCES projects(id),
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    project_id BIGINT REFERENCES projects(id),
     total_cost DECIMAL(10,2) NOT NULL,
     issue_date DATE NOT NULL,
     validity_date DATE NOT NULL,
     content TEXT NOT NULL
 );
--- Insert sample data
-INSERT INTO components (id, name, type, taux_tva) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'Wooden Cabinet', 'MATERIAL', 20.0),
-    ('22222222-2222-2222-2222-222222222222', 'Granite Countertop', 'MATERIAL', 20.0),
-    ('33333333-3333-3333-3333-333333333333', 'Plumbing Installation', 'LABOR', 20.0),
-    ('44444444-4444-4444-4444-444444444444', 'Electrical Wiring', 'LABOR', 20.0),
-    ('55555555-5555-5555-5555-555555555555', 'Paint', 'MATERIAL', 20.0);
 
-INSERT INTO materials (id, name, cout_unitaire, quantite, cout_transport, coefficient_qualite) VALUES
-    ('11111111-1111-1111-1111-111111111111', 'Wood', 200.00, 5, 50.00, 1.2),
-    ('22222222-2222-2222-2222-222222222222', 'Steel', 500.00, 2, 100.00, 1.5),
-    ('55555555-5555-5555-5555-555555555555', 'Paint', 30.00, 10, 20.00, 1.1);
+-- Insert sample data
+INSERT INTO clients (name, email, phone_number, address, is_professional, discount_rate) VALUES
+    ('John Doe', 'john@example.com', '1234567890', '123 Main St, City', false, 0.0),
+    ('Jane Smith', 'jane@company.com', '0987654321', '456 Oak Ave, Town', true, 0.1);
+
+INSERT INTO projects (name, surface, start_date, status, profit_margin, total_cost, client_id) VALUES
+    ('Kitchen Renovation', 20.5, '2023-06-01', 'EN_COURS', 15.0, 0.0, 1),
+    ('Office Kitchen Remodel', 35.0, '2023-07-15', 'EN_ATTENTE', 20.0, 0.0, 2);
+
+INSERT INTO components (name, type, taux_tva) VALUES
+    ('Wooden Cabinet', 'MATERIAL', 20.0),
+    ('Granite Countertop', 'MATERIAL', 20.0),
+    ('Plumbing Installation', 'LABOR', 20.0),
+    ('Electrical Wiring', 'LABOR', 20.0);
+
+INSERT INTO materials (id, cout_unitaire, quantite, cout_transport, coefficient_qualite) VALUES
+    (1, 200.00, 5, 50.00, 1.2),
+    (2, 500.00, 2, 100.00, 1.5);
 
 INSERT INTO labor (id, taux_horaire, heures_travail, productivite_ouvrier) VALUES
-    ('33333333-3333-3333-3333-333333333333', 50.00, 8, 1.2),
-    ('44444444-4444-4444-4444-444444444444', 60.00, 6, 1.1);
-
-INSERT INTO clients (id, name, email, phone, address, is_professional) VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'John Doe', 'john@example.com', '1234567890', '123 Main St, City', false),
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Jane Smith', 'jane@company.com', '0987654321', '456 Oak Ave, Town', true);
-
-INSERT INTO projects (id, name, surface, start_date, status, client_id) VALUES
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Kitchen Renovation', 20.5, '2023-06-01', 'EN_COURS', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'Office Kitchen Remodel', 35.0, '2023-07-15', 'EN_ATTENTE', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+    (3, 50.00, 8, 1.2),
+    (4, 60.00, 6, 1.1);
 
 INSERT INTO project_components (project_id, component_id, quantity) VALUES
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', '11111111-1111-1111-1111-111111111111', 3),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', '22222222-2222-2222-2222-222222222222', 1),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', '33333333-3333-3333-3333-333333333333', 1),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', '44444444-4444-4444-4444-444444444444', 1),
-    ('cccccccc-cccc-cccc-cccc-cccccccccccc', '55555555-5555-5555-5555-555555555555', 2),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '11111111-1111-1111-1111-111111111111', 5),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '22222222-2222-2222-2222-222222222222', 2),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '33333333-3333-3333-3333-333333333333', 1),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '44444444-4444-4444-4444-444444444444', 1),
-    ('dddddddd-dddd-dddd-dddd-dddddddddddd', '55555555-5555-5555-5555-555555555555', 3);
+    (1, 1, 3),
+    (1, 2, 1),
+    (1, 3, 1),
+    (1, 4, 1),
+    (2, 1, 5),
+    (2, 2, 2),
+    (2, 3, 1),
+    (2, 4, 1);
+
+    ALTER TABLE materials ALTER COLUMN cout_unitaire TYPE NUMERIC(10, 2);

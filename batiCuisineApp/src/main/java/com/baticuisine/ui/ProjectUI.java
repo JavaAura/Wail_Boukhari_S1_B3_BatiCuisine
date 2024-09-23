@@ -1,5 +1,6 @@
 package com.baticuisine.ui;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -28,18 +29,16 @@ public class ProjectUI {
     private final CostCalculator costCalculator;
     private final QuoteGenerator quoteGenerator;
     private final InputValidator inputValidator;
-    private final MaterialService materialService;
     private final ClientService clientService;
 
-    public ProjectUI(ProjectService projectService, CostCalculator costCalculator, 
-                     InputValidator inputValidator, QuoteGenerator quoteGenerator,
-                     MaterialService materialService, ClientService clientService) {
+    public ProjectUI(ProjectService projectService, CostCalculator costCalculator,
+            InputValidator inputValidator, QuoteGenerator quoteGenerator,
+            MaterialService materialService, ClientService clientService) {
         this.scanner = new Scanner(System.in);
         this.projectService = projectService;
         this.costCalculator = costCalculator;
         this.quoteGenerator = quoteGenerator;
         this.inputValidator = inputValidator;
-        this.materialService = materialService;
         this.clientService = clientService;
     }
 
@@ -52,30 +51,37 @@ public class ProjectUI {
             }
         }
     }
-public Optional<Project> getProjectByName(String projectName) {
-    try {
-        return projectService.findByName(projectName);
-    } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
-        throw new RuntimeException("Failed to retrieve project by name", e);
+
+    public Optional<Project> getProjectByName(String projectName) {
+        try {
+            return projectService.getProjectByName(projectName);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error retrieving project by name: " + projectName, e);
+            throw new RuntimeException("Failed to retrieve project by name", e);
+        }
     }
-}
+
     private void displayMainMenu() {
         System.out.println("\n=== Project Management ===");
         System.out.println("1. Create a new project");
         System.out.println("2. View and manage existing projects");
         System.out.println("3. Delete a project");
-        System.out.println("4. Manage quotes");
         System.out.println("5. Return to main menu");
     }
 
     private boolean handleMainMenuChoice(int choice) {
         switch (choice) {
-            case 1: createNewProject(); return true;
-            case 2: viewAndManageProjects(); return true;
-            case 3: deleteProject(); return true;
-            case 4: manageQuotes(); return true;
-            case 5: return false;
+            case 1:
+                createNewProject();
+                return true;
+            case 2:
+                viewAndManageProjects();
+                return true;
+            case 3:
+                deleteProject();
+                return true;
+            case 4:
+                return false;
             default:
                 System.out.println("Invalid option. Please try again.");
                 return true;
@@ -90,12 +96,23 @@ public Optional<Project> getProjectByName(String projectName) {
     }
 
     private Project createProjectFromInput() {
-        String projectName = inputValidator.getValidStringInput(scanner, "Project name: ");
-        double surface = inputValidator.getValidDoubleInput(scanner, "Surface area (m²): ");
-        LocalDate startDate = inputValidator.getValidDateInput(scanner, "Start date (YYYY-MM-DD): ");
+        String projectName = inputValidator.getValidStringInput(scanner, "Nom du projet: ");
+        double surface = inputValidator.getValidDoubleInput(scanner, "Surface (en mètres carrés): ");
+        LocalDate startDate = inputValidator.getValidDateInput(scanner, "Date de début (jj/mm/aaaa): ");
         ProjectStatus status = getValidProjectStatus();
         Client client = getOrCreateClient();
         return new Project(projectName, surface, startDate, status, client);
+    }
+    
+    private ProjectStatus getValidProjectStatus() {
+        while (true) {
+            String statusInput = inputValidator.getValidStringInput(scanner, "Statut du projet (EN_COURS, TERMINE, ANNULE, EN_ATTENTE): ");
+            try {
+                return ProjectStatus.fromDbValue(statusInput);
+            } catch (IllegalArgumentException e) {
+                System.out.println("Statut invalide. Veuillez entrer l'un des suivants: EN_COURS, TERMINE, ANNULE, EN_ATTENTE.");
+            }
+        }
     }
 
     private void addComponentsToProject(Project project) {
@@ -104,14 +121,21 @@ public Optional<Project> getProjectByName(String projectName) {
             System.out.println("1. Add material");
             System.out.println("2. Add labor");
             System.out.println("3. Finish adding components");
-
+    
             int componentChoice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
-
+    
             switch (componentChoice) {
-                case 1: addMaterialToProject(project); break;
-                case 2: addLaborToProject(project); break;
-                case 3: return;
-                default: System.out.println("Invalid option. Please try again.");
+                case 1:
+                    addMaterialToProject(project);
+                    break;
+                case 2:
+                    addLaborToProject(project);
+                    break;
+                case 3:
+                    saveProject(project);
+                    return;
+                default:
+                    System.out.println("Invalid option. Please try again.");
             }
         }
     }
@@ -127,18 +151,48 @@ public Optional<Project> getProjectByName(String projectName) {
 
     private Client getOrCreateClient() {
         System.out.println("\n=== Client Information ===");
-        String clientName = inputValidator.getValidStringInput(scanner, "Client name: ");
-        return clientService.getClientByName(clientName).orElseGet(this::createNewClient);
+        boolean clientExists = inputValidator.getValidBooleanInput(scanner, "Does the client already exist? (oui/non): ");
+        if (clientExists) {
+            String clientName = inputValidator.getValidStringInput(scanner, "Client name (e.g., John Doe): ");
+            String clientPhone = inputValidator.getValidPhoneInput(scanner, "Client phone number (e.g., +1234567890): ");
+            List<Client> clients = clientService.getClientsByNameAndPhone(clientName, clientPhone);
+            if (clients.isEmpty()) {
+                System.out.println("Client not found. Let's create a new client.");
+                return createNewClient();
+            } else if (clients.size() == 1) {
+                return clients.get(0);
+            } else {
+                return selectClientFromList(clients);
+            }
+        } else {
+            return createNewClient();
+        }
+    }
+
+    private Client selectClientFromList(List<Client> clients) {
+        System.out.println("\nMultiple clients found with the same name. Please select the correct client:");
+        for (int i = 0; i < clients.size(); i++) {
+            System.out.println((i + 1) + ". " + clients.get(i));
+        }
+        int clientIndex = inputValidator.getValidIntInput(scanner, "Select a client (1 to " + clients.size() + "): ") - 1;
+        if (clientIndex >= 0 && clientIndex < clients.size()) {
+            return clients.get(clientIndex);
+        } else {
+            System.out.println("Invalid selection. Please try again.");
+            return selectClientFromList(clients);
+        }
     }
 
     private Client createNewClient() {
         System.out.println("Client not found. Let's create a new client.");
-        String name = inputValidator.getValidStringInput(scanner, "Client name: ");
-        String email = inputValidator.getValidEmailInput(scanner, "Client email: ");
-        String address = inputValidator.getValidStringInput(scanner, "Client address: ");
-        String phone = inputValidator.getValidPhoneInput(scanner, "Client phone number: ");
-        boolean isProfessional = inputValidator.getValidBooleanInput(scanner, "Is the client professional? (yes/no): ");
-        double discountRate = inputValidator.getValidDoubleInput(scanner, "Client discount rate (0-1): ");
+        String name = inputValidator.getValidStringInput(scanner, "Client name (e.g., John Doe): ");
+        String email = inputValidator.getValidEmailInput(scanner, "Client email (e.g., john.doe@example.com): ");
+        String address = inputValidator.getValidStringInput(scanner, "Client address (e.g., 123 Main St): ");
+        String phone = inputValidator.getValidPhoneInput(scanner, "Client phone number (e.g., +1234567890): ");
+        boolean isProfessional = inputValidator.getValidBooleanInput(scanner,
+                "Is the client professional? (oui/non): ");
+        double discountRate = inputValidator.getValidDoubleInput(scanner,
+                "Client discount rate (0-1, e.g., 0.1 for 10%): ");
         Client newClient = new Client(name, email, address, phone, isProfessional, discountRate);
         clientService.createClient(newClient);
         System.out.println("New client created successfully!");
@@ -148,7 +202,12 @@ public Optional<Project> getProjectByName(String projectName) {
     private void addMaterialToProject(Project project) {
         Material material = createMaterialFromInput();
         project.addMaterial(material);
-        System.out.println("Material added to the project.");
+        try {
+            projectService.saveMaterial(material, project.getId());
+            System.out.println("Material added to the project and saved to the database.");
+        } catch (SQLException e) {
+            System.out.println("Failed to save material to the database: " + e.getMessage());
+        }
     }
 
     private Material createMaterialFromInput() {
@@ -164,7 +223,12 @@ public Optional<Project> getProjectByName(String projectName) {
     private void addLaborToProject(Project project) {
         Labor labor = createLaborFromInput();
         project.addLabor(labor);
-        System.out.println("Labor added to the project.");
+        try {
+            projectService.saveLabor(labor, project.getId());
+            System.out.println("Labor added to the project and saved to the database.");
+        } catch (SQLException e) {
+            System.out.println("Failed to save labor to the database: " + e.getMessage());
+        }
     }
 
     private Labor createLaborFromInput() {
@@ -224,13 +288,26 @@ public Optional<Project> getProjectByName(String projectName) {
 
     private boolean handleProjectMenuChoice(int choice, Project project) {
         switch (choice) {
-            case 1: viewProjectDetails(project); return true;
-            case 2: updateProjectStatus(project); return true;
-            case 3: addMaterialToProject(project); return true;
-            case 4: addLaborToProject(project); return true;
-            case 5: calculateAndDisplayTotalCost(project); return true;
-            case 6: generateAndDisplayQuote(project); return true;
-            case 7: return false;
+            case 1:
+                viewProjectDetails(project);
+                return true;
+            case 2:
+                updateProjectStatus(project);
+                return true;
+            case 3:
+                addMaterialToProject(project);
+                return true;
+            case 4:
+                addLaborToProject(project);
+                return true;
+            case 5:
+                calculateAndDisplayTotalCost(project);
+                return true;
+            case 6:
+                generateAndDisplayQuote(project);
+                return true;
+            case 7:
+                return false;
             default:
                 System.out.println("Invalid option. Please try again.");
                 return true;
@@ -259,18 +336,20 @@ public Optional<Project> getProjectByName(String projectName) {
     }
 
     private void calculateAndDisplayTotalCost(Project project) {
-        double totalCost = costCalculator.calculateTotalCost(project);
-        System.out.println("Total cost for project " + project.getProjectName() + ": " + String.format("%.2f", totalCost) + " €");
+        Project updatedProject = projectService.calculateTotalCost(project.getId());
+        System.out.println(
+                "Total cost for project " + updatedProject.getProjectName() + ": " + String.format("%.2f", updatedProject.getTotalCost()) + " €");
+        // Update the project in the current context
+        project.setTotalCost(updatedProject.getTotalCost());
     }
-
     private void generateAndDisplayQuote(Project project) {
         Quote quote = quoteGenerator.generateQuote(project);
         System.out.println("\nQuote generated successfully!");
         System.out.println(quote.toString());
         System.out.println("\nDetailed quote content:");
         System.out.println(quote.getContent());
-        
-        if (inputValidator.getValidBooleanInput(scanner, "Do you want to save this quote? (yes/no): ")) {
+
+        if (inputValidator.getValidBooleanInput(scanner, "Do you want to save this quote? (oui/non): ")) {
             saveQuote(quote);
         }
     }
@@ -283,7 +362,7 @@ public Optional<Project> getProjectByName(String projectName) {
             System.out.println("Failed to save quote.");
         }
     }
-    
+
     private void deleteProject() {
         String projectName = inputValidator.getValidStringInput(scanner, "Enter the name of the project to delete: ");
         Optional<Project> projectToDelete = projectService.getProjectByName(projectName);
@@ -293,7 +372,7 @@ public Optional<Project> getProjectByName(String projectName) {
             System.out.println("Project not found.");
         }
     }
-    
+
     private void confirmAndDeleteProject(Project project) {
         System.out.println("Are you sure you want to delete this project? " + project.getProjectName());
         if (inputValidator.getValidBooleanInput(scanner, "Confirm deletion (yes/no): ")) {
@@ -306,45 +385,5 @@ public Optional<Project> getProjectByName(String projectName) {
         } else {
             System.out.println("Deletion cancelled.");
         }
-    }
-
-    private ProjectStatus getValidProjectStatus() {
-        System.out.println("Available project statuses:");
-        ProjectStatus[] statuses = ProjectStatus.values();
-        IntStream.range(0, statuses.length)
-                .forEach(i -> System.out.println((i + 1) + ". " + statuses[i]));
-
-        int statusChoice = inputValidator.getValidIntInput(scanner, "Choose a project status: ");
-        return statuses[statusChoice - 1];
-    }
-
-    private void manageQuotes() {
-        System.out.println("\n=== Quote Management ===");
-        System.out.println("1. Generate a new quote");
-        System.out.println("2. View existing quotes");
-        System.out.println("0. Return");
-
-        int choice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
-
-        switch (choice) {
-            case 1: generateNewQuote(); break;
-            case 2: viewExistingQuotes(); break;
-            case 0: break;
-            default: System.out.println("Invalid option.");
-        }
-    }
-
-    private void generateNewQuote() {
-        String projectName = inputValidator.getValidStringInput(scanner, "Enter the name of the project to generate a quote for: ");
-        Optional<Project> projectOpt = projectService.getProjectByName(projectName);
-        if (projectOpt.isPresent()) {
-            generateAndDisplayQuote(projectOpt.get());
-        } else {
-            System.out.println("Project not found.");
-        }
-    }
-
-    private void viewExistingQuotes() {
-        System.out.println("Viewing existing quotes is not implemented yet.");
     }
 }
