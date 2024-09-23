@@ -66,6 +66,7 @@ public class ProjectUI {
         System.out.println("1. Create a new project");
         System.out.println("2. View and manage existing projects");
         System.out.println("3. Delete a project");
+        System.out.println("4. View quotes by project name");
         System.out.println("5. Return to main menu");
     }
 
@@ -81,6 +82,9 @@ public class ProjectUI {
                 deleteProject();
                 return true;
             case 4:
+                viewQuotesByProjectName();
+                return true;
+            case 5:
                 return false;
             default:
                 System.out.println("Invalid option. Please try again.");
@@ -103,14 +107,16 @@ public class ProjectUI {
         Client client = getOrCreateClient();
         return new Project(projectName, surface, startDate, status, client);
     }
-    
+
     private ProjectStatus getValidProjectStatus() {
         while (true) {
-            String statusInput = inputValidator.getValidStringInput(scanner, "Statut du projet (EN_COURS, TERMINE, ANNULE, EN_ATTENTE): ");
+            String statusInput = inputValidator.getValidStringInput(scanner,
+                    "Statut du projet (EN_COURS, TERMINE, ANNULE, EN_ATTENTE): ");
             try {
                 return ProjectStatus.fromDbValue(statusInput);
             } catch (IllegalArgumentException e) {
-                System.out.println("Statut invalide. Veuillez entrer l'un des suivants: EN_COURS, TERMINE, ANNULE, EN_ATTENTE.");
+                System.out.println(
+                        "Statut invalide. Veuillez entrer l'un des suivants: EN_COURS, TERMINE, ANNULE, EN_ATTENTE.");
             }
         }
     }
@@ -121,9 +127,9 @@ public class ProjectUI {
             System.out.println("1. Add material");
             System.out.println("2. Add labor");
             System.out.println("3. Finish adding components");
-    
+
             int componentChoice = inputValidator.getValidIntInput(scanner, "Choose an option: ");
-    
+
             switch (componentChoice) {
                 case 1:
                     addMaterialToProject(project);
@@ -151,10 +157,12 @@ public class ProjectUI {
 
     private Client getOrCreateClient() {
         System.out.println("\n=== Client Information ===");
-        boolean clientExists = inputValidator.getValidBooleanInput(scanner, "Does the client already exist? (oui/non): ");
+        boolean clientExists = inputValidator.getValidBooleanInput(scanner,
+                "Does the client already exist? (oui/non): ");
         if (clientExists) {
             String clientName = inputValidator.getValidStringInput(scanner, "Client name (e.g., John Doe): ");
-            String clientPhone = inputValidator.getValidPhoneInput(scanner, "Client phone number (e.g., +1234567890): ");
+            String clientPhone = inputValidator.getValidPhoneInput(scanner,
+                    "Client phone number (e.g., +1234567890): ");
             List<Client> clients = clientService.getClientsByNameAndPhone(clientName, clientPhone);
             if (clients.isEmpty()) {
                 System.out.println("Client not found. Let's create a new client.");
@@ -174,7 +182,8 @@ public class ProjectUI {
         for (int i = 0; i < clients.size(); i++) {
             System.out.println((i + 1) + ". " + clients.get(i));
         }
-        int clientIndex = inputValidator.getValidIntInput(scanner, "Select a client (1 to " + clients.size() + "): ") - 1;
+        int clientIndex = inputValidator.getValidIntInput(scanner, "Select a client (1 to " + clients.size() + "): ")
+                - 1;
         if (clientIndex >= 0 && clientIndex < clients.size()) {
             return clients.get(clientIndex);
         } else {
@@ -283,7 +292,8 @@ public class ProjectUI {
         System.out.println("4. Add labor");
         System.out.println("5. Calculate total cost");
         System.out.println("6. Generate quote");
-        System.out.println("7. Return to project list");
+        System.out.println("7. Review and accept quote");
+        System.out.println("8. Return to project list");
     }
 
     private boolean handleProjectMenuChoice(int choice, Project project) {
@@ -307,6 +317,9 @@ public class ProjectUI {
                 generateAndDisplayQuote(project);
                 return true;
             case 7:
+                reviewAndAcceptQuote(project);
+                return true;
+            case 8:
                 return false;
             default:
                 System.out.println("Invalid option. Please try again.");
@@ -338,10 +351,12 @@ public class ProjectUI {
     private void calculateAndDisplayTotalCost(Project project) {
         Project updatedProject = projectService.calculateTotalCost(project.getId());
         System.out.println(
-                "Total cost for project " + updatedProject.getProjectName() + ": " + String.format("%.2f", updatedProject.getTotalCost()) + " €");
+                "Total cost for project " + updatedProject.getProjectName() + ": "
+                        + String.format("%.2f", updatedProject.getTotalCost()) + " €");
         // Update the project in the current context
         project.setTotalCost(updatedProject.getTotalCost());
     }
+
     private void generateAndDisplayQuote(Project project) {
         Quote quote = quoteGenerator.generateQuote(project);
         System.out.println("\nQuote generated successfully!");
@@ -384,6 +399,65 @@ public class ProjectUI {
             }
         } else {
             System.out.println("Deletion cancelled.");
+        }
+    }
+
+    public void reviewAndAcceptQuote(Project project) {
+        List<Quote> quotes = quoteGenerator.getQuotesByProjectId(project.getId());
+
+        if (quotes.isEmpty()) {
+            System.out.println("No quotes found for the project: " + project.getProjectName());
+            return;
+        }
+
+        System.out.println("\nQuotes for project: " + project.getProjectName());
+        for (int i = 0; i < quotes.size(); i++) {
+            System.out.println((i + 1) + ". " + quotes.get(i).toString());
+        }
+
+        int quoteIndex = inputValidator.getValidIntInput(scanner,
+                "Select a quote to review (1 to " + quotes.size() + "): ") - 1;
+        if (quoteIndex >= 0 && quoteIndex < quotes.size()) {
+            Quote quote = quotes.get(quoteIndex);
+            System.out.println("\nQuote Details:");
+            System.out.println(quote.toString());
+            System.out.println("\nDetailed quote content:");
+            System.out.println(quote.getContent());
+
+            boolean accept = inputValidator.getValidBooleanInput(scanner,
+                    "Do you want to accept this quote? (yes/no): ");
+            try {
+                quote.setAccepted(accept);
+                quoteGenerator.updateQuote(quote);
+                System.out.println("Quote " + (accept ? "accepted" : "refused") + " successfully.");
+            } catch (IllegalStateException e) {
+                System.out.println("Failed to accept quote: " + e.getMessage());
+            }
+        } else {
+            System.out.println("Invalid selection. Please try again.");
+        }
+    }
+
+    public void viewQuotesByProjectName() {
+        String projectName = inputValidator.getValidStringInput(scanner, "Enter the name of the project: ");
+        Optional<Project> projectOpt = projectService.getProjectByName(projectName);
+
+        if (projectOpt.isPresent()) {
+            Project project = projectOpt.get();
+            List<Quote> quotes = quoteGenerator.getQuotesByProjectId(project.getId());
+
+            if (quotes.isEmpty()) {
+                System.out.println("No quotes found for the project: " + projectName);
+            } else {
+                System.out.println("\nQuotes for project: " + projectName);
+                for (Quote quote : quotes) {
+                    System.out.println(quote.toString());
+                    System.out.println("\nDetailed quote content:");
+                    System.out.println(quote.getContent());
+                }
+            }
+        } else {
+            System.out.println("Project not found: " + projectName);
         }
     }
 }

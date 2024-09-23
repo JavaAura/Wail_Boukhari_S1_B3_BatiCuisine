@@ -103,4 +103,16 @@ public class InputValidator {
                 .map(Enum::name)
                 .toArray(String[]::new);
     }
+
+    public Long getValidLongInput(Scanner scanner, String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String input = scanner.nextLine().trim();
+            try {
+                return Long.parseLong(input);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid number.");
+            }
+        }
+    }
 }

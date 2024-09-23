@@ -10,7 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.baticuisine.model.Client;
+import com.baticuisine.model.Project;
 import com.baticuisine.model.Quote;
+import com.baticuisine.model.enums.ProjectStatus;
 
 public class QuoteRepositoryImpl implements QuoteRepository {
     private final Connection connection;
@@ -28,12 +31,12 @@ public class QuoteRepositoryImpl implements QuoteRepository {
             pstmt.setDate(3, Date.valueOf(quote.getValidityDate()));
             pstmt.setLong(4, quote.getProject().getId());
             pstmt.setString(5, quote.getContent());
-    
+
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows == 0) {
                 throw new SQLException("Creating quote failed, no rows affected.");
             }
-    
+
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     quote.setId(generatedKeys.getLong(1));
@@ -67,7 +70,7 @@ public class QuoteRepositoryImpl implements QuoteRepository {
         List<Quote> quotes = new ArrayList<>();
         String sql = "SELECT * FROM quotes";
         try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 quotes.add(mapResultSetToQuote(rs));
             }
@@ -121,13 +124,60 @@ public class QuoteRepositoryImpl implements QuoteRepository {
 
     private Quote mapResultSetToQuote(ResultSet rs) throws SQLException {
         Quote quote = new Quote(
-            rs.getDouble("estimated_amount"),
-            rs.getDate("issue_date").toLocalDate(),
-            rs.getDate("validity_date").toLocalDate(),
-            null
-        );
+                rs.getDouble("total_cost"),
+                rs.getDate("issue_date").toLocalDate(),
+                rs.getDate("validity_date").toLocalDate(),
+                findProjectById(rs.getLong("project_id")));
         quote.setId(rs.getLong("id"));
-        quote.setAccepted(rs.getBoolean("accepted"));
+        quote.setAccepted(rs.getBoolean("is_accepted"));
+        quote.setContent(rs.getString("content"));
         return quote;
+    }
+
+    private Project findProjectById(Long projectId) throws SQLException {
+        String sql = "SELECT * FROM projects WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setLong(1, projectId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return mapResultSetToProject(rs);
+            } else {
+                throw new SQLException("Project not found with id: " + projectId);
+            }
+        }
+    }
+
+    private Project mapResultSetToProject(ResultSet rs) throws SQLException {
+        Project project = new Project(
+                rs.getString("name"),
+                rs.getDouble("surface"),
+                rs.getDate("start_date").toLocalDate(),
+                ProjectStatus.fromDbValue(rs.getString("status")),
+                null);
+        project.setId(rs.getLong("id"));
+        project.setProfitMargin(rs.getDouble("profit_margin"));
+        project.setTotalCost(rs.getDouble("total_cost"));
+        project.setClient(findClientById(rs.getLong("client_id")));
+        return project;
+    }
+
+    private Client findClientById(Long clientId) throws SQLException {
+        String sql = "SELECT * FROM clients WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setLong(1, clientId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return new Client(
+                    rs.getString("name"),
+                    rs.getString("email"),
+                    rs.getString("phone_number"),
+                    rs.getString("address"),
+                    rs.getBoolean("is_professional"),
+                    rs.getDouble("discount_rate")
+                );
+            } else {
+                throw new SQLException("Client not found with id: " + clientId);
+            }
+        }
     }
 }

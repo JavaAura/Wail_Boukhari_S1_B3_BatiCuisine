@@ -1,15 +1,16 @@
 package com.baticuisine.service;
 
-import com.baticuisine.model.Project;
-import com.baticuisine.model.Quote;
-import com.baticuisine.model.Material;
-import com.baticuisine.model.Labor;
-import com.baticuisine.repository.QuoteRepository;
-
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.baticuisine.model.Labor;
+import com.baticuisine.model.Material;
+import com.baticuisine.model.Project;
+import com.baticuisine.model.Quote;
+import com.baticuisine.repository.QuoteRepository;
 
 public class QuoteGenerator {
     private static final Logger LOGGER = Logger.getLogger(QuoteGenerator.class.getName());
@@ -19,6 +20,10 @@ public class QuoteGenerator {
     public QuoteGenerator(CostCalculator costCalculator, QuoteRepository quoteRepository) {
         this.costCalculator = costCalculator;
         this.quoteRepository = quoteRepository;
+    }
+
+    public List<Quote> getQuotesByProjectId(Long projectId) {
+        return quoteRepository.findByProjectId(projectId);
     }
 
     public Quote generateQuote(Project project) {
@@ -53,11 +58,11 @@ public class QuoteGenerator {
         content.append("Materials:\n");
         for (Material material : project.getMaterials()) {
             content.append("- ").append(material.getName())
-                   .append(": ").append(String.format("%.2f", material.getQuantity()))
-                   .append(" ").append(material.getComponentType())
-                   .append(" x ").append(String.format("%.2f", material.getUnitCost()))
-                   .append("€ = ").append(String.format("%.2f", material.calculateCost()))
-                   .append("€\n");
+                    .append(": ").append(String.format("%.2f", material.getQuantity()))
+                    .append(" ").append(material.getComponentType())
+                    .append(" x ").append(String.format("%.2f", material.getUnitCost()))
+                    .append("€ = ").append(String.format("%.2f", material.calculateCost()))
+                    .append("€\n");
         }
     }
 
@@ -65,10 +70,10 @@ public class QuoteGenerator {
         content.append("\nLabor:\n");
         for (Labor labor : project.getLaborItems()) {
             content.append("- ").append(labor.getName())
-                   .append(": ").append(String.format("%.2f", labor.getHoursWorked()))
-                   .append(" hours x ").append(String.format("%.2f", labor.getHourlyRate()))
-                   .append("€/h = ").append(String.format("%.2f", labor.calculateCost()))
-                   .append("€\n");
+                    .append(": ").append(String.format("%.2f", labor.getHoursWorked()))
+                    .append(" hours x ").append(String.format("%.2f", labor.getHourlyRate()))
+                    .append("€/h = ").append(String.format("%.2f", labor.calculateCost()))
+                    .append("€\n");
         }
     }
 
@@ -85,5 +90,13 @@ public class QuoteGenerator {
             LOGGER.log(Level.SEVERE, "Error saving quote", e);
             return Optional.empty();
         }
+    }
+
+    public Optional<Quote> getQuoteById(Long id) {
+        return quoteRepository.findById(id);
+    }
+
+    public void updateQuote(Quote quote) {
+        quoteRepository.update(quote);
     }
 }

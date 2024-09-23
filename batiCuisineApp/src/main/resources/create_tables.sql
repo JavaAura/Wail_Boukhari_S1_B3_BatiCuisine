@@ -70,7 +70,8 @@ CREATE TABLE quotes (
     total_cost DECIMAL(10,2) NOT NULL,
     issue_date DATE NOT NULL,
     validity_date DATE NOT NULL,
-    content TEXT NOT NULL
+    content TEXT NOT NULL,
+    is_accepted BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Insert sample data
@@ -106,4 +107,4 @@ INSERT INTO project_components (project_id, component_id, quantity) VALUES
     (2, 3, 1),
     (2, 4, 1);
 
-    ALTER TABLE materials ALTER COLUMN cout_unitaire TYPE NUMERIC(10, 2);
+ALTER TABLE materials ALTER COLUMN cout_unitaire TYPE NUMERIC(10, 2);
