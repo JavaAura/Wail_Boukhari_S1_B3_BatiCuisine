@@ -10,11 +10,19 @@ import com.baticuisine.model.Client;
 import com.baticuisine.repository.ClientRepository;
 
 public class ClientService {
+    private static ClientService instance;
     private static final Logger LOGGER = Logger.getLogger(ClientService.class.getName());
     private final ClientRepository clientRepository;
 
-    public ClientService(ClientRepository clientRepository) {
+    private ClientService(ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
+    }
+
+    public static synchronized ClientService getInstance(ClientRepository clientRepository) {
+        if (instance == null) {
+            instance = new ClientService(clientRepository);
+        }
+        return instance;
     }
 
     public Optional<Client> createClient(Client client) {
@@ -38,7 +46,9 @@ public class ClientService {
     }
     public List<Client> getClientsByNameAndPhone(String name, String phone) {
         try {
-            return clientRepository.findByNameAndPhone(name, phone);
+            return clientRepository.findAll().stream()
+                .filter(client -> client.getName().equals(name) && client.getPhoneNumber().equals(phone))
+                .collect(Collectors.toList());
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error retrieving clients by name and phone: " + name + ", " + phone, e);
             throw new RuntimeException("Failed to retrieve clients by name and phone", e);
@@ -88,7 +98,7 @@ public class ClientService {
 
     public List<Client> getProfessionalClients() {
         return getAllClients().stream()
-                .filter(Client::isProfessional)
-                .collect(Collectors.toList());
+            .filter(Client::isProfessional)
+            .collect(Collectors.toList());
     }
 }

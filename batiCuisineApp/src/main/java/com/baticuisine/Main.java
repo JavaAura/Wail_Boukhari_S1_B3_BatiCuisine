@@ -33,17 +33,17 @@ public class Main {
 
         try (Connection connection = DatabaseConnection.getInstance().getConnection()) {
             // Initialize repositories
-            ProjectRepository projectRepository = new ProjectRepositoryImpl(connection);
-            ClientRepository clientRepository = new ClientRepositoryImpl(connection);
-            QuoteRepository quoteRepository = new QuoteRepositoryImpl(connection);
-            ComponentRepository componentRepository = new ComponentRepositoryImpl();
+            ProjectRepository projectRepository = ProjectRepositoryImpl.getInstance(connection);
+            ClientRepository clientRepository = ClientRepositoryImpl.getInstance(connection);
+            QuoteRepository quoteRepository = QuoteRepositoryImpl.getInstance(connection);
+            ComponentRepository componentRepository = ComponentRepositoryImpl.getInstance();
 
             // Initialize services
             DateUtils dateUtils = new DateUtils();
             MaterialService materialService = new MaterialService(componentRepository);
             CostCalculator costCalculator = new CostCalculator(materialService);
-            ProjectService projectService = new ProjectService(projectRepository, dateUtils, componentRepository, costCalculator);
-            ClientService clientService = new ClientService(clientRepository);
+            ProjectService projectService = ProjectService.getInstance(projectRepository, dateUtils, componentRepository, costCalculator);
+            ClientService clientService = ClientService.getInstance(clientRepository);
             QuoteGenerator quoteGenerator = new QuoteGenerator(costCalculator, quoteRepository);
 
             // Initialize UI components

@@ -15,17 +15,25 @@ import com.baticuisine.repository.ProjectRepository;
 import com.baticuisine.utils.DateUtils;
 
 public class ProjectService {
+    private static ProjectService instance;
     private static final Logger LOGGER = Logger.getLogger(ProjectService.class.getName());
     private final ProjectRepository projectRepository;
     private final ComponentRepository componentRepository;
     private final DateUtils dateUtils;
     private final CostCalculator costCalculator;
 
-    public ProjectService(ProjectRepository projectRepository, DateUtils dateUtils, ComponentRepository componentRepository, CostCalculator costCalculator) {
+    private ProjectService(ProjectRepository projectRepository, DateUtils dateUtils, ComponentRepository componentRepository, CostCalculator costCalculator) {
         this.projectRepository = projectRepository;
         this.dateUtils = dateUtils;
         this.componentRepository = componentRepository;
         this.costCalculator = costCalculator;
+    }
+
+    public static synchronized ProjectService getInstance(ProjectRepository projectRepository, DateUtils dateUtils, ComponentRepository componentRepository, CostCalculator costCalculator) {
+        if (instance == null) {
+            instance = new ProjectService(projectRepository, dateUtils, componentRepository, costCalculator);
+        }
+        return instance;
     }
 
     public Optional<Project> createProject(Project project) {

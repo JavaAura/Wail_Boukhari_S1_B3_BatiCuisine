@@ -6,7 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.baticuisine.database.DatabaseConnection;
@@ -15,10 +17,19 @@ import com.baticuisine.model.Labor;
 import com.baticuisine.model.Material;
 
 public class ComponentRepositoryImpl implements ComponentRepository {
+    private static ComponentRepositoryImpl instance;
     private final Connection connection;
+    private final Map<String, List<Component>> componentsByType = new HashMap<>();
 
-    public ComponentRepositoryImpl() {
+    private ComponentRepositoryImpl() {
         this.connection = DatabaseConnection.getInstance().getConnection();
+    }
+
+    public static synchronized ComponentRepositoryImpl getInstance() {
+        if (instance == null) {
+            instance = new ComponentRepositoryImpl();
+        }
+        return instance;
     }
 
     @Override
@@ -98,14 +109,20 @@ public class ComponentRepositoryImpl implements ComponentRepository {
 
     @Override
     public List<Component> findByType(String type) {
+        if (componentsByType.containsKey(type)) {
+            return componentsByType.get(type);
+        }
+ 
         List<Component> components = new ArrayList<>();
         String sql = "SELECT * FROM components WHERE component_type = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, type);
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
-                components.add(mapResultSetToComponent(rs));
+                Component component = mapResultSetToComponent(rs);
+                components.add(component);
             }
+            componentsByType.put(type, components);
         } catch (SQLException e) {
             throw new RuntimeException("Error finding components by type", e);
         }

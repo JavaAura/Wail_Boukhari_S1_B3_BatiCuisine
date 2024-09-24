@@ -16,10 +16,18 @@ import com.baticuisine.model.Quote;
 import com.baticuisine.model.enums.ProjectStatus;
 
 public class QuoteRepositoryImpl implements QuoteRepository {
+    private static QuoteRepositoryImpl instance;
     private final Connection connection;
 
-    public QuoteRepositoryImpl(Connection connection) {
+    private QuoteRepositoryImpl(Connection connection) {
         this.connection = connection;
+    }
+
+    public static synchronized QuoteRepositoryImpl getInstance(Connection connection) {
+        if (instance == null) {
+            instance = new QuoteRepositoryImpl(connection);
+        }
+        return instance;
     }
 
     @Override

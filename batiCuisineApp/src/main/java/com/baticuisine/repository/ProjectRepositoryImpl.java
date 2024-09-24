@@ -9,6 +9,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import com.baticuisine.model.Client;
 import com.baticuisine.model.Labor;
@@ -17,10 +18,19 @@ import com.baticuisine.model.Project;
 import com.baticuisine.model.enums.ProjectStatus;
 
 public class ProjectRepositoryImpl implements ProjectRepository {
+    private static final Logger LOGGER = Logger.getLogger(ProjectRepositoryImpl.class.getName());
+    private static ProjectRepositoryImpl instance;
     private final Connection connection;
 
-    public ProjectRepositoryImpl(Connection connection) {
+    private ProjectRepositoryImpl(Connection connection) {
         this.connection = connection;
+    }
+
+    public static synchronized ProjectRepositoryImpl getInstance(Connection connection) {
+        if (instance == null) {
+            instance = new ProjectRepositoryImpl(connection);
+        }
+        return instance;
     }
 
     @Override
@@ -99,7 +109,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
 
         // First, insert into the components table
-        String componentSql = "INSERT INTO components (name, type, taux_tva) VALUES (?, ?, ?)";
+        String componentSql = "INSERT INTO components (name, type, tva_cost) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(componentSql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, material.getName());
             pstmt.setString(2, "MATERIAL");
@@ -116,7 +126,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
 
         // Then, insert into the materials table
-        String materialSql = "INSERT INTO materials (id, cout_unitaire, quantite, cout_transport, coefficient_qualite) VALUES (?, ?, ?, ?, ?)";
+        String materialSql = "INSERT INTO materials (id, unit_cost, quantite, transport_cost, coefficient_qualite) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(materialSql)) {
             pstmt.setLong(1, material.getId());
             pstmt.setDouble(2, material.getUnitCost());
@@ -150,7 +160,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
 
         // First, insert into the components table
-        String componentSql = "INSERT INTO components (name, type, taux_tva) VALUES (?, ?, ?)";
+        String componentSql = "INSERT INTO components (name, type, tva_cost) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(componentSql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, labor.getName());
             pstmt.setString(2, "LABOR");
@@ -167,7 +177,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
         }
 
         // Then, insert into the labor table
-        String laborSql = "INSERT INTO labor (id, taux_horaire, heures_travail, productivite_ouvrier) VALUES (?, ?, ?, ?)";
+        String laborSql = "INSERT INTO labor (id, hourly_rate, work_hours, worker_productivity) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(laborSql)) {
             pstmt.setLong(1, labor.getId());
             pstmt.setDouble(2, labor.getHourlyRate());
@@ -308,7 +318,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
 
     private List<Material> findMaterialsByProjectId(Long projectId) throws SQLException {
         List<Material> materials = new ArrayList<>();
-        String sql = "SELECT c.id, c.name, c.taux_tva, m.cout_unitaire, m.quantite, m.cout_transport, m.coefficient_qualite "
+        String sql = "SELECT c.id, c.name, c.tva_cost, m.unit_cost, m.quantite, m.transport_cost, m.coefficient_qualite "
                 +
                 "FROM components c " +
                 "JOIN materials m ON c.id = m.id " +
@@ -320,10 +330,10 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             while (rs.next()) {
                 Material material = new Material(
                         rs.getString("name"),
-                        rs.getDouble("taux_tva"),
-                        rs.getDouble("cout_unitaire"),
+                        rs.getDouble("tva_cost"),
+                        rs.getDouble("unit_cost"),
                         rs.getDouble("quantite"),
-                        rs.getDouble("cout_transport"),
+                        rs.getDouble("transport_cost"),
                         rs.getDouble("coefficient_qualite"));
                 material.setId(rs.getLong("id"));
                 materials.add(material);
@@ -334,7 +344,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
 
     private List<Labor> findLaborByProjectId(Long projectId) throws SQLException {
         List<Labor> laborItems = new ArrayList<>();
-        String sql = "SELECT c.id, c.name, c.taux_tva, l.taux_horaire, l.heures_travail, l.productivite_ouvrier " +
+        String sql = "SELECT c.id, c.name, c.tva_cost, l.hourly_rate, l.work_hours, l.worker_productivity " +
                 "FROM components c " +
                 "JOIN labor l ON c.id = l.id " +
                 "JOIN project_components pc ON c.id = pc.component_id " +
@@ -345,10 +355,10 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             while (rs.next()) {
                 Labor labor = new Labor(
                         rs.getString("name"),
-                        rs.getDouble("taux_tva"),
-                        rs.getDouble("taux_horaire"),
-                        rs.getDouble("heures_travail"),
-                        rs.getDouble("productivite_ouvrier"));
+                        rs.getDouble("tva_cost"),
+                        rs.getDouble("hourly_rate"),
+                        rs.getDouble("work_hours"),
+                        rs.getDouble("worker_productivity"));
                 labor.setId(rs.getLong("id"));
                 laborItems.add(labor);
             }
@@ -401,10 +411,10 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     private Material mapResultSetToMaterial(ResultSet rs) throws SQLException {
         Material material = new Material(
             rs.getString("name"),
-            rs.getDouble("taux_tva"),
-            rs.getDouble("cout_unitaire"),
+            rs.getDouble("tva_cost"),
+            rs.getDouble("unit_cost"),
             rs.getDouble("quantite"),
-            rs.getDouble("cout_transport"),
+            rs.getDouble("transport_cost"),
             rs.getDouble("coefficient_qualite")
         );
         material.setId(rs.getLong("id"));
@@ -414,17 +424,17 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     private Labor mapResultSetToLabor(ResultSet rs) throws SQLException {
         Labor labor = new Labor(
             rs.getString("name"),
-            rs.getDouble("taux_tva"),
-            rs.getDouble("taux_horaire"),
-            rs.getDouble("heures_travail"),
-            rs.getDouble("productivite_ouvrier")
+            rs.getDouble("tva_cost"),
+            rs.getDouble("hourly_rate"),
+            rs.getDouble("work_hours"),
+            rs.getDouble("worker_productivity")
         );
         labor.setId(rs.getLong("id"));
         return labor;
     }
 
     private void updateMaterial(Material material) throws SQLException {
-        String sql = "UPDATE materials SET cout_unitaire = ?, quantite = ?, cout_transport = ?, coefficient_qualite = ? WHERE id = ?";
+        String sql = "UPDATE materials SET unit_cost= ?, quantite = ?, transport_cost = ?, coefficient_qualite = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setDouble(1, material.getUnitCost());
             pstmt.setDouble(2, material.getQuantity());
@@ -436,7 +446,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     }
 
     private void updateLabor(Labor labor) throws SQLException {
-        String sql = "UPDATE labor SET taux_horaire = ?, heures_travail = ?, productivite_ouvrier = ? WHERE id = ?";
+        String sql = "UPDATE labor SET hourly_rate = ?, work_hours = ?, worker_productivity = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setDouble(1, labor.getHourlyRate());
             pstmt.setDouble(2, labor.getHoursWorked());

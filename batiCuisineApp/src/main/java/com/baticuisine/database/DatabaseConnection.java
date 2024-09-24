@@ -34,10 +34,12 @@ public class DatabaseConnection {
     }
 
     public static DatabaseConnection getInstance() {
+        DatabaseConnection instance = DatabaseConnection.instance;
         if (instance == null) {
             synchronized (DatabaseConnection.class) {
+                instance = DatabaseConnection.instance;
                 if (instance == null) {
-                    instance = new DatabaseConnection();
+                    DatabaseConnection.instance = instance = new DatabaseConnection();
                 }
             }
         }

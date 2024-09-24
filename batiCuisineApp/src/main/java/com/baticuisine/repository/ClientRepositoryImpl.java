@@ -8,14 +8,25 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.baticuisine.model.Client;
 
 public class ClientRepositoryImpl implements ClientRepository {
+    private static final Logger LOGGER = Logger.getLogger(ClientRepositoryImpl.class.getName());
+    private static ClientRepositoryImpl instance;
     private final Connection connection;
 
-    public ClientRepositoryImpl(Connection connection) {
+    private ClientRepositoryImpl(Connection connection) {
         this.connection = connection;
+    }
+
+    public static synchronized ClientRepositoryImpl getInstance(Connection connection) {
+        if (instance == null) {
+            instance = new ClientRepositoryImpl(connection);
+        }
+        return instance;
     }
     @Override
     public Client save(Client client) {
@@ -40,7 +51,9 @@ public class ClientRepositoryImpl implements ClientRepository {
                     throw new SQLException("Creating client failed, no ID obtained.");
                 }
             }
+            LOGGER.info("Client saved: " + client.getName());
         } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error saving client", e);
             throw new RuntimeException("Error saving client", e);
         }
         return client;
@@ -69,11 +82,14 @@ public class ClientRepositoryImpl implements ClientRepository {
             pstmt.setLong(1, id);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
+                LOGGER.info("Client found with id: " + id);
                 return Optional.of(mapResultSetToClient(rs));
             }
         } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error finding client by id", e);
             throw new RuntimeException("Error finding client by id", e);
         }
+        LOGGER.warning("Client not found with id: " + id);
         return Optional.empty();
     }
 
