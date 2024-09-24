@@ -88,32 +88,67 @@ CREATE INDEX idx_quotes_project_id ON quotes(project_id);
 -- Insert sample data
 INSERT INTO clients (name, email, phone_number, address, is_professional, discount_rate) VALUES
     ('John Doe', 'john@example.com', '1234567890', '123 Main St, City', false, 0.0),
-    ('Jane Smith', 'jane@company.com', '0987654321', '456 Oak Ave, Town', true, 0.1);
+    ('Jane Smith', 'jane@company.com', '0987654321', '456 Oak Ave, Town', true, 0.1),
+    ('Alice Johnson', 'alice@home.com', '1112223333', '789 Pine Rd, Village', false, 0.05),
+    ('Bob Brown', 'bob@work.com', '4445556666', '101 Maple St, City', true, 0.15),
+    ('Charlie Davis', 'charlie@biz.com', '7778889999', '202 Birch Ln, Town', true, 0.2);
 
 INSERT INTO projects (name, surface, start_date, status, profit_margin, total_cost, client_id) VALUES
     ('Kitchen Renovation', 20.5, '2023-06-01', 'EN_COURS', 15.0, 0.0, 1),
-    ('Office Kitchen Remodel', 35.0, '2023-07-15', 'EN_ATTENTE', 20.0, 0.0, 2);
+    ('Office Kitchen Remodel', 35.0, '2023-07-15', 'EN_ATTENTE', 20.0, 0.0, 2),
+    ('Bathroom Upgrade', 15.0, '2023-08-01', 'EN_COURS', 10.0, 0.0, 3),
+    ('Living Room Extension', 50.0, '2023-09-01', 'EN_ATTENTE', 25.0, 0.0, 4),
+    ('Garage Conversion', 30.0, '2023-10-01', 'EN_COURS', 18.0, 0.0, 5);
 
 INSERT INTO components (name, type, tva_cost) VALUES
     ('Wooden Cabinet', 'MATERIAL', 20.0),
     ('Granite Countertop', 'MATERIAL', 20.0),
     ('Plumbing Installation', 'LABOR', 20.0),
-    ('Electrical Wiring', 'LABOR', 20.0);
+    ('Electrical Wiring', 'LABOR', 20.0),
+    ('Tile Flooring', 'MATERIAL', 20.0),
+    ('Paint', 'MATERIAL', 20.0),
+    ('Drywall Installation', 'LABOR', 20.0),
+    ('HVAC Installation', 'LABOR', 20.0),
+    ('Lighting Fixtures', 'MATERIAL', 20.0),
+    ('Roofing', 'LABOR', 20.0);
 
 INSERT INTO materials (id, unit_cost, quantite, transport_cost, coefficient_qualite) VALUES
     (1, 200.00, 5, 50.00, 1.2),
-    (2, 500.00, 2, 100.00, 1.5);
+    (2, 500.00, 2, 100.00, 1.5),
+    (5, 100.00, 10, 20.00, 1.1),
+    (6, 50.00, 20, 10.00, 1.0),
+    (9, 150.00, 8, 30.00, 1.3);
 
 INSERT INTO labor (id, hourly_rate, work_hours, worker_productivity) VALUES
     (3, 50.00, 8, 1.2),
-    (4, 60.00, 6, 1.1);
+    (4, 60.00, 6, 1.1),
+    (7, 40.00, 10, 1.0),
+    (8, 70.00, 5, 1.4),
+    (10, 80.00, 4, 1.3);
 
 INSERT INTO project_components (project_id, component_id, quantity) VALUES
     (1, 1, 3),
     (1, 2, 1),
     (1, 3, 1),
     (1, 4, 1),
+    (1, 5, 2),
     (2, 1, 5),
     (2, 2, 2),
     (2, 3, 1),
-    (2, 4, 1);
+    (2, 4, 1),
+    (2, 6, 3),
+    (3, 5, 4),
+    (3, 6, 5),
+    (3, 7, 2),
+    (3, 8, 1),
+    (3, 9, 3),
+    (4, 1, 2),
+    (4, 2, 1),
+    (4, 3, 1),
+    (4, 4, 1),
+    (4, 10, 1),
+    (5, 5, 3),
+    (5, 6, 4),
+    (5, 7, 2),
+    (5, 8, 1),
+    (5, 9, 2);
