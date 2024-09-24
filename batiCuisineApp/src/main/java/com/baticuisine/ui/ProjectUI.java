@@ -100,9 +100,9 @@ public class ProjectUI {
     }
 
     private Project createProjectFromInput() {
-        String projectName = inputValidator.getValidStringInput(scanner, "Nom du projet: ");
-        double surface = inputValidator.getValidDoubleInput(scanner, "Surface (en mètres carrés): ");
-        LocalDate startDate = inputValidator.getValidDateInput(scanner, "Date de début (jj/mm/aaaa): ");
+        String projectName = inputValidator.getValidStringInput(scanner, "Nom du projet (ex: Rénovation Cuisine) : ");
+        double surface = inputValidator.getValidDoubleInput(scanner, "Surface (en mètres carrés, ex: 50.0) : ");
+        LocalDate startDate = inputValidator.getValidDateInput(scanner, "Date de début (jj/mm/aaaa, ex: 01/01/2023) : ");
         ProjectStatus status = getValidProjectStatus();
         Client client = getOrCreateClient();
         return new Project(projectName, surface, startDate, status, client);

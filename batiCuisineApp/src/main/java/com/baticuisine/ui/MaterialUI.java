@@ -73,12 +73,12 @@ public class MaterialUI {
     }
 
     private Material createMaterialFromInput() {
-        String name = inputValidator.getValidStringInput(scanner, "Nom du matériau : ");
-        double vatRate = inputValidator.getValidDoubleInput(scanner, "Taux de TVA : ");
-        double unitCost = inputValidator.getValidDoubleInput(scanner, "Coût unitaire : ");
-        double quantity = inputValidator.getValidDoubleInput(scanner, "Quantité : ");
-        double transportCost = inputValidator.getValidDoubleInput(scanner, "Coût de transport : ");
-        double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité : ");
+        String name = inputValidator.getValidStringInput(scanner, "Nom du matériau (ex: Bois, Métal) : ");
+        double vatRate = inputValidator.getValidDoubleInput(scanner, "Taux de TVA (ex: 20.0) : ");
+        double unitCost = inputValidator.getValidDoubleInput(scanner, "Coût unitaire (ex: 15.50) : ");
+        double quantity = inputValidator.getValidDoubleInput(scanner, "Quantité (ex: 100) : ");
+        double transportCost = inputValidator.getValidDoubleInput(scanner, "Coût de transport (ex: 50.0) : ");
+        double qualityCoefficient = inputValidator.getValidDoubleInput(scanner, "Coefficient de qualité (ex: 1.2) : ");
         
         return new Material(name, vatRate, unitCost, quantity, transportCost, qualityCoefficient);
     }

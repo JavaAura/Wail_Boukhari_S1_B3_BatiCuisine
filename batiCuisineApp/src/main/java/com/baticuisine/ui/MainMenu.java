@@ -36,12 +36,15 @@ public class MainMenu {
         System.out.println("\n=== Menu Principal ===");
         Arrays.stream(MenuOption.values())
                 .forEach(option -> System.out.println((option.ordinal() + 1) + ". " + option.getDescription()));
-
+        
         int choice;
         do {
-            choice = inputValidator.getValidIntInput(scanner, "Choisissez une option : ");
+            choice = inputValidator.getValidIntInput(scanner, "Choisissez une option (ex: 1 pour Gérer les projets) : ");
+            if (choice < 1 || choice > MenuOption.values().length) {
+                System.out.println("Option invalide. Veuillez entrer un nombre entre 1 et " + MenuOption.values().length + ".");
+            }
         } while (choice < 1 || choice > MenuOption.values().length);
-
+        
         return MenuOption.values()[choice - 1];
     }
 

@@ -409,7 +409,7 @@ public class ProjectRepositoryImpl implements ProjectRepository {
     }
 
     private Material mapResultSetToMaterial(ResultSet rs) throws SQLException {
-        Material material = new Material(
+        return new Material(
             rs.getString("name"),
             rs.getDouble("tva_cost"),
             rs.getDouble("unit_cost"),
@@ -417,22 +417,17 @@ public class ProjectRepositoryImpl implements ProjectRepository {
             rs.getDouble("transport_cost"),
             rs.getDouble("coefficient_qualite")
         );
-        material.setId(rs.getLong("id"));
-        return material;
     }
-
+    
     private Labor mapResultSetToLabor(ResultSet rs) throws SQLException {
-        Labor labor = new Labor(
+        return new Labor(
             rs.getString("name"),
             rs.getDouble("tva_cost"),
             rs.getDouble("hourly_rate"),
             rs.getDouble("work_hours"),
             rs.getDouble("worker_productivity")
         );
-        labor.setId(rs.getLong("id"));
-        return labor;
     }
-
     private void updateMaterial(Material material) throws SQLException {
         String sql = "UPDATE materials SET unit_cost= ?, quantite = ?, transport_cost = ?, coefficient_qualite = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {

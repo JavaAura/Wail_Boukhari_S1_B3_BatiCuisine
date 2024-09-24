@@ -4,6 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.baticuisine.model.Client;
+import com.baticuisine.model.Material;
 import com.baticuisine.model.Project;
 
 public class CostCalculator {
@@ -39,15 +40,17 @@ public class CostCalculator {
         }
     }
 
-    private double calculateMaterialCost(Project project) {
-        return materialService.calculateTotalCost(project.getMaterials());
-    }
-    
-    private double calculateLaborCost(Project project) {
-        return project.getLaborItems().stream()
-                .mapToDouble(labor -> labor.getHoursWorked() * labor.getHourlyRate())
-                .sum();
-    }
+private double calculateMaterialCost(Project project) {
+    return project.getMaterials().stream()
+            .mapToDouble(Material::calculateCost)
+            .sum();
+}
+
+private double calculateLaborCost(Project project) {
+    return project.getLaborItems().stream()
+            .mapToDouble(labor -> labor.getHoursWorked() * labor.getHourlyRate())
+            .sum();
+}
 
     public double calculateCostPerSquareMeter(Project project) {
         try {

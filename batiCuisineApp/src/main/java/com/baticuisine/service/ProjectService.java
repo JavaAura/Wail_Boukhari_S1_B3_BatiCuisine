@@ -61,7 +61,9 @@ public class ProjectService {
 
     public List<Project> getAllProjects() {
         try {
-            return projectRepository.findAll();
+            List<Project> projects = projectRepository.findAll();
+            projects.forEach(project -> LOGGER.info("Retrieved project: " + project.getProjectName()));
+            return projects;
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error retrieving all projects", e);
             throw new RuntimeException("Failed to retrieve projects", e);

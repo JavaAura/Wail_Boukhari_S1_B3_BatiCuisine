@@ -66,14 +66,13 @@ public class ClientUI {
             LOGGER.warning("Failed to add client.");
         }
     }
-
     private Client createClientFromInput() {
-        String name = inputValidator.getValidStringInput(scanner, "Client name: ");
-        String email = inputValidator.getValidEmailInput(scanner, "Client email: ");
-        String address = inputValidator.getValidStringInput(scanner, "Client address: ");
-        String phone = inputValidator.getValidPhoneInput(scanner, "Client phone number: ");
-        boolean isProfessional = inputValidator.getValidBooleanInput(scanner, "Is the client professional? (yes/no): ");
-        double discountRate = inputValidator.getValidDoubleInput(scanner, "Client discount rate (0-1): ");
+        String name = inputValidator.getValidStringInput(scanner, "Nom du client (ex: John Doe) : ");
+        String email = inputValidator.getValidEmailInput(scanner, "Email du client (ex: john.doe@example.com) : ");
+        String address = inputValidator.getValidStringInput(scanner, "Adresse du client (ex: 123 Rue Principale) : ");
+        String phone = inputValidator.getValidPhoneInput(scanner, "Numéro de téléphone du client (ex: +33123456789) : ");
+        boolean isProfessional = inputValidator.getValidBooleanInput(scanner, "Le client est-il professionnel ? (oui/non) : ");
+        double discountRate = inputValidator.getValidDoubleInput(scanner, "Taux de remise du client (0-1, ex: 0.1 pour 10%) : ");
         return new Client(name, email, address, phone, isProfessional, discountRate);
     }
 
